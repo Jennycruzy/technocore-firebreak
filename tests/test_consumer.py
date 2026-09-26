@@ -79,6 +79,18 @@ class ConsumerTests(unittest.TestCase):
                     consume_response(raw, room="safety", root=root)
             self.assertIsNone(load_cursor(root, "safety"))
 
+    def test_adapter_failure_never_commits_cursor(self):
+        raw = response([message()])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+
+            def fail(_event):
+                raise RuntimeError("adapter failed")
+
+            with self.assertRaises(RuntimeError):
+                consume_response(raw, room="safety", root=root, on_event=fail)
+            self.assertIsNone(load_cursor(root, "safety"))
+
     def test_committed_cursor_cannot_move_backwards(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

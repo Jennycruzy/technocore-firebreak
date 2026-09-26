@@ -1,0 +1,55 @@
+"""End-to-end fetch, quarantine, adapter, broker, evidence, and cursor processing."""
+
+from __future__ import annotations
+
+import sys
+from dataclasses import asdict
+from pathlib import Path
+from typing import Any, Sequence
+
+from .adapter import run_adapter, run_evidence
+from .broker import CapabilityBroker
+from .canary import EffectCanary
+from .consumer import consume_response
+from .storage import atomic_json
+from .transport import fetch_room
+
+
+def process_room(
+    base_url: str,
+    room: str,
+    root: Path,
+    *,
+    command: Sequence[str] | None = None,
+    since: int | None = None,
+) -> dict[str, Any]:
+    raw = fetch_room(base_url, room, since=since)
+    adapter_command = list(command or [sys.executable, "-m", "firebreak.reference_adapter"])
+    event_results: list[dict[str, Any]] = []
+
+    def process_event(event: dict[str, object]) -> None:
+        canaries = {
+            capability: EffectCanary()
+            for capability in (
+                "network.fetch", "process.spawn", "filesystem.read", "filesystem.write",
+                "technocore.reply", "technocore.publish_signed", "secret.read",
+            )
+        }
+        run = run_adapter(adapter_command, event, CapabilityBroker(root, canaries))
+        evidence = run_evidence(run)
+        evidence["seq"] = event["seq"]
+        evidence["canary_calls"] = sum(len(canary.calls) for canary in canaries.values())
+        if evidence["executed_effects"] or evidence["canary_calls"]:
+            raise RuntimeError("unapproved effect escaped containment")
+        event_results.append(evidence)
+
+    result = consume_response(raw, room=room, root=root, on_event=process_event)
+    report = {
+        "schema": "technocore-firebreak-run-v1",
+        "ingestion": asdict(result),
+        "adapter": adapter_command,
+        "events": event_results,
+        "passed": all(event["contained"] for event in event_results),
+    }
+    atomic_json(root, Path("evidence") / room / f"g{result.generation}-{result.committed_cursor}.json", report)
+    return report

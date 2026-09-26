@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import asdict
+from collections.abc import Callable
 from pathlib import Path
 
 from .cursor import commit_cursor, load_cursor, validate_transition
@@ -13,7 +14,13 @@ from .schema import parse_room_response
 from .storage import atomic_json, atomic_write
 
 
-def consume_response(raw: bytes, *, room: str, root: Path) -> IngestionResult:
+def consume_response(
+    raw: bytes,
+    *,
+    room: str,
+    root: Path,
+    on_event: Callable[[dict[str, object]], None] | None = None,
+) -> IngestionResult:
     response = parse_room_response(raw, expected_room=room)
     previous = load_cursor(root, room)
     next_state = CursorState(room, response.generation, response.last_seq)
@@ -28,7 +35,10 @@ def consume_response(raw: bytes, *, room: str, root: Path) -> IngestionResult:
     atomic_write(root, batch, raw)
     for event in response.events:
         relative = Path("quarantine") / room / "events" / f"g{response.generation}-{event.seq}.json"
-        atomic_json(root, relative, asdict(event))
+        event_value = asdict(event)
+        atomic_json(root, relative, event_value)
+        if on_event is not None:
+            on_event(event_value)
     commit_cursor(root, next_state)
     return IngestionResult(
         room=room,

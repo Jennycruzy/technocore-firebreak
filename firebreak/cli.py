@@ -6,9 +6,11 @@ from pathlib import Path
 
 from . import __version__
 from .consumer import consume_response
+from .certify import certify, write_certification
 from .corpus import install, verify, write_evidence
 from .errors import FirebreakError
 from .render import terminal_safe_json
+from .pipeline import process_room
 
 
 def parser() -> argparse.ArgumentParser:
@@ -26,12 +28,34 @@ def parser() -> argparse.ArgumentParser:
     corpus_verify = corpus_commands.add_parser("verify")
     corpus_verify.add_argument("--source", type=Path)
     corpus_verify.add_argument("--output", type=Path, default=Path("evidence"))
+    certification = subcommands.add_parser("certify", help="certify an adapter against hostile records")
+    certification.add_argument("--output", type=Path, default=Path("evidence"))
+    certification.add_argument("--root", type=Path, default=Path(".firebreak"))
+    certification.add_argument("adapter", nargs=argparse.REMAINDER)
+    run = subcommands.add_parser("run", help="process one room response through the full pipeline")
+    run.add_argument("room")
+    run.add_argument("--base-url", required=True)
+    run.add_argument("--root", type=Path, default=Path(".firebreak"))
+    run.add_argument("--since", type=int)
+    run.add_argument("adapter", nargs=argparse.REMAINDER)
     return command
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
+        if args.command == "run":
+            report = process_room(
+                args.base_url, args.room, args.root,
+                command=args.adapter or None, since=args.since,
+            )
+            print(terminal_safe_json(report))
+            return 0 if report["passed"] else 1
+        if args.command == "certify":
+            report = certify(args.root, command=args.adapter or None)
+            write_certification(report, args.output)
+            print(terminal_safe_json(report))
+            return 0 if report["passed"] else 1
         if args.command == "corpus":
             if args.corpus_command == "install":
                 install(args.source.read_bytes())

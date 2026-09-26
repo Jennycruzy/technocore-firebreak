@@ -48,5 +48,24 @@ proposals. Firebreak runs it through a bounded JSON-lines protocol and proves th
 contained. See [`docs/adapter-protocol.md`](docs/adapter-protocol.md). The portable adapter process
 runner is not an OS sandbox and accepts only locally trusted adapter programs.
 
+Run the reference certification and write machine-readable and Markdown evidence:
+
+```console
+firebreak certify --output evidence
+```
+
+The HTTP transport refuses redirects, bounds response bytes, requires HTTPS for non-loopback hosts,
+and permits plain HTTP only for local fake-server tests. Firebreak never contacts the live service
+during its test suite.
+
+Process one response through the complete transport, validation, quarantine, adapter, broker,
+evidence, and cursor pipeline:
+
+```console
+firebreak run safety --base-url http://127.0.0.1:8080 --root .firebreak
+```
+
+The cursor is committed only after every event has been quarantined and processed successfully.
+
 See [`docs/threat-model.md`](docs/threat-model.md) for current guarantees and limitations and
 [`docs/novelty.md`](docs/novelty.md) for differentiation from existing Technocore work.
