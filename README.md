@@ -23,5 +23,18 @@ python -m firebreak ingest safety response.json --root .firebreak
 
 Input text is always data. The command prints escaped JSON and never renders room text directly.
 
+## Verify the upstream safety corpus
+
+Firebreak vendors the consumer-safety corpus from `flop-labs/technocore-chat` PR #555 at a pinned
+commit and refuses it if its SHA-256 changes. Verify all nine policy cases and write evidence with:
+
+```console
+firebreak corpus verify --output evidence
+```
+
+The verifier independently checks retained Ed25519 signatures, identity evidence, room-generation
+freshness, observed signed-tuple replay, URL risk, and the rule that content grants no authority or
+automatic action.
+
 See [`docs/threat-model.md`](docs/threat-model.md) for current guarantees and limitations and
 [`docs/novelty.md`](docs/novelty.md) for differentiation from existing Technocore work.
