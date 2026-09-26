@@ -74,3 +74,5 @@ boundary.
 
 See [`docs/threat-model.md`](docs/threat-model.md) for current guarantees and limitations and
 [`docs/novelty.md`](docs/novelty.md) for differentiation from existing Technocore work.
+Exact clean-checkout commands and evidence contents are documented in
+[`docs/reproducibility.md`](docs/reproducibility.md).

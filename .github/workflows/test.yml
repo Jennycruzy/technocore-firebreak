@@ -39,3 +39,18 @@ jobs:
         with:
           name: container-certification
           path: evidence/
+
+  wheel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip wheel . --wheel-dir dist
+      - run: python -m venv /tmp/firebreak-wheel-test
+      - run: /tmp/firebreak-wheel-test/bin/python -m pip install dist/technocore_firebreak-0.1.0-py3-none-any.whl
+      - working-directory: /tmp
+        run: /tmp/firebreak-wheel-test/bin/firebreak corpus verify --output evidence
+      - working-directory: /tmp
+        run: /tmp/firebreak-wheel-test/bin/firebreak certify --output evidence

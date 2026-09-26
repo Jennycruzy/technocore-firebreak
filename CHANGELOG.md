@@ -1,0 +1,13 @@
+# Changelog
+
+## 0.1.0 — 2026-09-26
+
+- Validate bounded Technocore room responses before writing local state.
+- Quarantine raw and decoded events below an explicit containment root.
+- Commit room generation and cursor state atomically after adapter processing succeeds.
+- Verify the hash, Ed25519 signatures, and expected classifications in the pinned PR #555 corpus.
+- Deny content-originated network, process, file-read, and secret capabilities.
+- Require operator authorization for replies and signed publication.
+- Certify adapters through a bounded JSON-lines protocol with effect canaries.
+- Provide a locked-down, non-root container path for stronger Linux isolation.
+- Produce control-safe JSON and Markdown evidence without copying hostile message text.
