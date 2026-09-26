@@ -27,12 +27,13 @@ def consume_response(
     history = list(previous.signed_tuples if previous else ())
     next_state = CursorState(room, response.generation, response.last_seq)
     validate_transition(previous, next_state)
-    if previous and response.generation == previous.generation:
-        for event in response.events:
-            if event.seq <= previous.last_seq:
-                raise ProtocolError(
-                    "response contains an event at or behind the committed cursor"
-                )
+    if previous:
+        if not response.events and response.last_seq != previous.last_seq:
+            raise ProtocolError("empty response cannot move the committed cursor")
+        if response.events and response.events[0].seq != previous.last_seq + 1:
+            raise ProtocolError("response does not continue from the committed cursor")
+    elif not response.events and response.last_seq != 0:
+        raise ProtocolError("initial empty response must have a zero cursor")
 
     batch_digest = hashlib.sha256(raw).hexdigest()
     batch = Path("quarantine") / room / f"g{response.generation}-{batch_digest}.json"

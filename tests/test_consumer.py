@@ -114,6 +114,38 @@ class ConsumerTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 consume_response(response([message()]), room="safety", root=root)
 
+    def test_sequence_gaps_are_rejected_before_writes(self):
+        raw = response([message(seq=3), message(seq=5)])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with self.assertRaisesRegex(ProtocolError, "contiguous"):
+                consume_response(raw, room="safety", root=root)
+            self.assertEqual(list(root.iterdir()), [])
+
+    def test_batch_must_continue_from_committed_cursor(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            consume_response(response([message(seq=3)]), room="safety", root=root)
+            with self.assertRaisesRegex(ProtocolError, "continue"):
+                consume_response(
+                    response([message(seq=5)], last_seq=5),
+                    room="safety",
+                    root=root,
+                )
+            self.assertEqual(load_cursor(root, "safety").last_seq, 3)
+
+    def test_empty_response_cannot_advance_cursor(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with self.assertRaisesRegex(ProtocolError, "zero cursor"):
+                consume_response(response([], last_seq=99), room="safety", root=root)
+            self.assertIsNone(load_cursor(root, "safety"))
+
+            consume_response(response([message(seq=7)]), room="safety", root=root)
+            with self.assertRaisesRegex(ProtocolError, "cannot move"):
+                consume_response(response([], last_seq=99), room="safety", root=root)
+            self.assertEqual(load_cursor(root, "safety").last_seq, 7)
+
     def test_new_generation_may_continue_from_retained_floor(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

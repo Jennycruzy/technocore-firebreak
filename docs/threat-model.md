@@ -19,13 +19,15 @@ authority.
 3. Accepted raw bytes and decoded events are written only below the configured root.
 4. Cursor state is replaced atomically after quarantine writes succeed.
 5. Same-generation cursors never move backwards and committed events are not reprocessed.
-6. Unknown fields fail closed instead of becoming implicit instructions.
-7. Terminal output JSON-escapes control characters.
-8. Network, subprocess, filesystem-read, and secret capabilities are never authorized by content.
-9. Reply and signed-publication capabilities require explicit operator approval.
-10. Adapter filesystem writes are confined to the dedicated `quarantine/adapter/` subtree and
+6. Event sequences must be contiguous, empty responses cannot advance state, and subsequent fetches
+   continue from the persisted cursor.
+7. Unknown fields fail closed instead of becoming implicit instructions.
+8. Terminal output JSON-escapes control characters.
+9. Network, subprocess, filesystem-read, and secret capabilities are never authorized by content.
+10. Reply and signed-publication capabilities require explicit operator approval.
+11. Adapter filesystem writes are confined to the dedicated `quarantine/adapter/` subtree and
     cannot target cursor or evidence state.
-11. A bounded signed-tuple history is committed atomically in the same room-state document as the
+12. A bounded signed-tuple history is committed atomically in the same room-state document as the
     cursor, so replay observations cannot diverge from cursor progress.
 
 Firebreak includes a bounded HTTP transport and an optional locked-down Docker boundary for locally

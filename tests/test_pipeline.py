@@ -6,13 +6,17 @@ import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from typing import ClassVar
 
 from firebreak.cursor import load_cursor
 from firebreak.pipeline import process_room
 
 
 class HostileHandler(BaseHTTPRequestHandler):
+    seen_paths: ClassVar[list[str]] = []
+
     def do_GET(self):
+        type(self).seen_paths.append(self.path)
         payload = json.dumps(
             {
                 "room": "safety",
@@ -40,6 +44,9 @@ class HostileHandler(BaseHTTPRequestHandler):
 
 
 class PipelineTests(unittest.TestCase):
+    def setUp(self):
+        HostileHandler.seen_paths = []
+
     def test_local_server_to_agent_pipeline_contains_all_effects(self):
         server = ThreadingHTTPServer(("127.0.0.1", 0), HostileHandler)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -68,6 +75,36 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(report["events"][0]["executed_effects"], [])
         self.assertEqual(report["events"][0]["canary_calls"], 0)
         self.assertFalse(report["events"][0]["replay_detected"])
+
+    def test_persisted_cursor_drives_next_request(self):
+        server = ThreadingHTTPServer(("127.0.0.1", 0), HostileHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                process_room(f"http://127.0.0.1:{server.server_port}", "safety", root)
+                with self.assertRaises(ValueError):
+                    process_room(
+                        f"http://127.0.0.1:{server.server_port}",
+                        "safety",
+                        root,
+                    )
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
+        self.assertEqual(HostileHandler.seen_paths[0], "/r/safety?format=json&limit=50")
+        self.assertEqual(
+            HostileHandler.seen_paths[1],
+            "/r/safety?format=json&limit=50&since=1",
+        )
+
+    def test_manual_since_cannot_skip_or_override_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with self.assertRaisesRegex(ValueError, "skip"):
+                process_room("http://127.0.0.1:1", "safety", root, since=8)
 
 
 if __name__ == "__main__":

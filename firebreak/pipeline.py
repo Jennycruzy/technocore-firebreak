@@ -12,6 +12,8 @@ from .adapter import run_adapter, run_evidence
 from .broker import CapabilityBroker
 from .canary import EffectCanary
 from .consumer import consume_response
+from .cursor import load_cursor
+from .errors import ProtocolError
 from .storage import atomic_json
 from .transport import fetch_room
 
@@ -24,7 +26,16 @@ def process_room(
     command: Sequence[str] | None = None,
     since: int | None = None,
 ) -> dict[str, Any]:
-    raw = fetch_room(base_url, room, since=since)
+    previous = load_cursor(root, room)
+    if previous is None:
+        if since not in (None, 0):
+            raise ProtocolError("initial request cannot skip unconsumed events")
+        effective_since = since
+    else:
+        if since is not None and since != previous.last_seq:
+            raise ProtocolError("since must match the committed cursor")
+        effective_since = previous.last_seq
+    raw = fetch_room(base_url, room, since=effective_since)
     adapter_command = list(
         command or [sys.executable, "-m", "firebreak.reference_adapter"]
     )

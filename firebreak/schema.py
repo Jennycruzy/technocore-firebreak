@@ -71,8 +71,8 @@ def parse_room_response(raw: bytes, *, expected_room: str) -> RoomResponse:
             raise ProtocolError(f"{location} must be an object")
         _fields(record, EVENT_FIELDS, location)
         seq = _integer(record.get("seq"), f"{location}.seq", minimum=1)
-        if seq <= previous:
-            raise ProtocolError("message sequences must be strictly increasing")
+        if previous and seq != previous + 1:
+            raise ProtocolError("message sequences must be contiguous")
         timestamp = record.get("ts")
         sender = record.get("from")
         text = record.get("text")
