@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -265,6 +266,61 @@ class ConsumerTests(unittest.TestCase):
             atomic_write(root, cursor_relative("safety"), b"x" * (MAX_CURSOR_BYTES + 1))
             with self.assertRaisesRegex(ContainmentError, "size limit"):
                 load_cursor(root, "safety")
+
+    def test_concurrent_consumer_fails_before_processing(self):
+        raw = response([message()])
+        entered = threading.Event()
+        release = threading.Event()
+        processed: list[str] = []
+
+        def hold(_event, _replayed):
+            processed.append("first")
+            entered.set()
+            release.wait(timeout=2)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            worker = threading.Thread(
+                target=consume_response,
+                kwargs={
+                    "raw": raw,
+                    "room": "safety",
+                    "root": root,
+                    "on_event": hold,
+                },
+            )
+            worker.start()
+            self.assertTrue(entered.wait(timeout=2))
+            with self.assertRaisesRegex(ContainmentError, "already being processed"):
+                consume_response(
+                    raw,
+                    room="safety",
+                    root=root,
+                    on_event=lambda *_args: processed.append("second"),
+                )
+            release.set()
+            worker.join(timeout=2)
+            self.assertFalse(worker.is_alive())
+            self.assertEqual(processed, ["first"])
+            self.assertEqual(load_cursor(root, "safety").last_seq, 1)
+
+    def test_processing_lock_is_released_after_failure(self):
+        raw = response([message()])
+
+        def fail(_event, _replayed):
+            raise RuntimeError("adapter failed")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with self.assertRaisesRegex(RuntimeError, "adapter failed"):
+                consume_response(
+                    raw,
+                    room="safety",
+                    root=root,
+                    on_event=fail,
+                )
+            result = consume_response(raw, room="safety", root=root)
+            self.assertEqual(result.committed_cursor, 1)
 
 
 if __name__ == "__main__":

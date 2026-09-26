@@ -9,6 +9,7 @@
 - Resume room fetches automatically from the persisted cursor.
 - Require durable run evidence before committing cursor and replay state.
 - Reject oversized, malformed, extended, or non-canonical cursor state.
+- Prevent concurrent consumers from processing the same room cursor.
 - Persist bounded signed-tuple replay history atomically with each room cursor.
 - Verify the hash, Ed25519 signatures, and expected classifications in the pinned PR #555 corpus.
 - Deny content-originated network, process, file-read, and secret capabilities.

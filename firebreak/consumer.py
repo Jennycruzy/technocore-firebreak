@@ -9,7 +9,8 @@ from pathlib import Path
 
 from .cursor import commit_cursor, load_cursor, validate_transition
 from .errors import ProtocolError
-from .models import CursorState, IngestionResult
+from .locking import room_lock
+from .models import CursorState, IngestionResult, RoomResponse
 from .replay import remember, signed_tuple_digest
 from .schema import parse_room_response
 from .storage import atomic_json, atomic_write
@@ -24,6 +25,26 @@ def consume_response(
     before_commit: Callable[[IngestionResult], None] | None = None,
 ) -> IngestionResult:
     response = parse_room_response(raw, expected_room=room)
+    with room_lock(root, room):
+        return _consume_parsed(
+            raw,
+            room=room,
+            root=root,
+            response=response,
+            on_event=on_event,
+            before_commit=before_commit,
+        )
+
+
+def _consume_parsed(
+    raw: bytes,
+    *,
+    room: str,
+    root: Path,
+    response: RoomResponse,
+    on_event: Callable[[dict[str, object], bool], None] | None,
+    before_commit: Callable[[IngestionResult], None] | None,
+) -> IngestionResult:
     previous = load_cursor(root, room)
     history = list(previous.signed_tuples if previous else ())
     next_state = CursorState(room, response.generation, response.last_seq)
