@@ -27,6 +27,7 @@ class CursorState:
     room: str
     generation: int
     last_seq: int
+    signed_tuples: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,4 +37,5 @@ class IngestionResult:
     previous_cursor: int | None
     committed_cursor: int
     accepted_events: int
+    replayed_events: int
     batch_sha256: str

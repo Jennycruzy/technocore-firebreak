@@ -30,7 +30,7 @@ def process_room(
     )
     event_results: list[dict[str, Any]] = []
 
-    def process_event(event: dict[str, object]) -> None:
+    def process_event(event: dict[str, object], replayed: bool) -> None:
         canaries = {
             capability: EffectCanary()
             for capability in (
@@ -46,6 +46,7 @@ def process_room(
         run = run_adapter(adapter_command, event, CapabilityBroker(root, canaries))
         evidence = run_evidence(run)
         evidence["seq"] = event["seq"]
+        evidence["replay_detected"] = replayed
         evidence["canary_calls"] = sum(
             len(canary.calls) for canary in canaries.values()
         )

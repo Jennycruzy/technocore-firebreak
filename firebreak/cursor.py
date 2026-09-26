@@ -23,7 +23,17 @@ def load_cursor(root: Path, room: str) -> CursorState | None:
         raise ContainmentError(f"cannot read cursor for {room}: {error}") from error
     try:
         value = json.loads(raw.decode("utf-8"))
-        state = CursorState(**value)
+        tuples = value.get("signed_tuples", [])
+        if not isinstance(tuples, list) or not all(
+            isinstance(item, str) for item in tuples
+        ):
+            raise TypeError
+        state = CursorState(
+            room=value["room"],
+            generation=value["generation"],
+            last_seq=value["last_seq"],
+            signed_tuples=tuple(tuples),
+        )
     except (UnicodeDecodeError, json.JSONDecodeError, TypeError) as error:
         raise ContainmentError(f"cursor for {room} is corrupt") from error
     if state.room != room:

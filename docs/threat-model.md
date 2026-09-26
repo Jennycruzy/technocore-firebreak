@@ -25,6 +25,8 @@ authority.
 9. Reply and signed-publication capabilities require explicit operator approval.
 10. Adapter filesystem writes are confined to the dedicated `quarantine/adapter/` subtree and
     cannot target cursor or evidence state.
+11. A bounded signed-tuple history is committed atomically in the same room-state document as the
+    cursor, so replay observations cannot diverge from cursor progress.
 
 Firebreak currently accepts already-fetched bytes. It does not yet provide a live network transport,
 OS sandbox, or model integration. Its broker makes and tests capability decisions but supports only

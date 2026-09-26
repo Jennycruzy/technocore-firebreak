@@ -67,6 +67,7 @@ class PipelineTests(unittest.TestCase):
         )
         self.assertEqual(report["events"][0]["executed_effects"], [])
         self.assertEqual(report["events"][0]["canary_calls"], 0)
+        self.assertFalse(report["events"][0]["replay_detected"])
 
 
 if __name__ == "__main__":

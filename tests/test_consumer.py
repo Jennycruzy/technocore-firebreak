@@ -92,7 +92,7 @@ class ConsumerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
 
-            def fail(_event):
+            def fail(_event, _replayed):
                 raise RuntimeError("adapter failed")
 
             with self.assertRaises(RuntimeError):
@@ -124,6 +124,26 @@ class ConsumerTests(unittest.TestCase):
                 response([message(seq=41)], generation=3), room="safety", root=root
             )
             self.assertEqual((result.generation, result.committed_cursor), (3, 41))
+
+    def test_signed_tuple_replay_state_is_atomic_and_persistent(self):
+        signature = "A" * 86
+        first = response([message(seq=1, nonce=7, sig=signature)])
+        second = response([message(seq=2, nonce=7, sig=signature)], last_seq=2)
+        observed = []
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            initial = consume_response(first, room="safety", root=root)
+            repeated = consume_response(
+                second,
+                room="safety",
+                root=root,
+                on_event=lambda _event, replayed: observed.append(replayed),
+            )
+            state = load_cursor(root, "safety")
+        self.assertEqual(initial.replayed_events, 0)
+        self.assertEqual(repeated.replayed_events, 1)
+        self.assertEqual(observed, [True])
+        self.assertEqual(len(state.signed_tuples), 1)
 
     def test_unknown_fields_are_rejected(self):
         with self.assertRaises(ProtocolError):
