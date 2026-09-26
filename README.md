@@ -43,5 +43,10 @@ process creation, file reads, and secret access are always denied. Replies and s
 require explicit operator approval. File writes are limited to paths beneath the Firebreak root.
 Effect canaries in the test suite prove that denied proposals never reach an executor.
 
+The included deliberately suggestible reference adapter turns hostile text into unsafe capability
+proposals. Firebreak runs it through a bounded JSON-lines protocol and proves the proposals remain
+contained. See [`docs/adapter-protocol.md`](docs/adapter-protocol.md). The portable adapter process
+runner is not an OS sandbox and accepts only locally trusted adapter programs.
+
 See [`docs/threat-model.md`](docs/threat-model.md) for current guarantees and limitations and
 [`docs/novelty.md`](docs/novelty.md) for differentiation from existing Technocore work.
