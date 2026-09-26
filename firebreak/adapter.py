@@ -6,6 +6,8 @@ import json
 import os
 import subprocess
 import tempfile
+import threading
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Sequence
@@ -55,25 +57,57 @@ def run_adapter(
     environment = {"PATH": os.environ.get("PATH", ""), "PYTHONIOENCODING": "utf-8"}
     with tempfile.TemporaryDirectory(prefix="firebreak-adapter-") as directory:
         try:
-            completed = subprocess.run(
+            process = subprocess.Popen(
                 list(command),
-                input=request,
+                stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=directory,
                 env=environment,
-                timeout=timeout,
-                check=False,
             )
-        except subprocess.TimeoutExpired as error:
-            raise ProtocolError("adapter exceeded its time limit") from error
-    if completed.returncode != 0:
-        raise ProtocolError(f"adapter exited with status {completed.returncode}")
-    if len(completed.stdout) > MAX_ADAPTER_OUTPUT or len(completed.stderr) > MAX_ADAPTER_OUTPUT:
+            assert process.stdin is not None and process.stdout is not None and process.stderr is not None
+            process.stdin.write(request)
+            process.stdin.close()
+            output = bytearray()
+            errors = bytearray()
+            overflow = threading.Event()
+
+            def read_bounded(stream, destination):
+                while chunk := stream.read(8192):
+                    remaining = MAX_ADAPTER_OUTPUT + 1 - len(destination)
+                    if remaining > 0:
+                        destination.extend(chunk[:remaining])
+                    if len(destination) > MAX_ADAPTER_OUTPUT:
+                        overflow.set()
+
+            readers = [
+                threading.Thread(target=read_bounded, args=(process.stdout, output), daemon=True),
+                threading.Thread(target=read_bounded, args=(process.stderr, errors), daemon=True),
+            ]
+            for reader in readers:
+                reader.start()
+            deadline = time.monotonic() + timeout
+            while process.poll() is None:
+                if overflow.is_set() or time.monotonic() >= deadline:
+                    process.kill()
+                    break
+                time.sleep(0.01)
+            returncode = process.wait()
+            for reader in readers:
+                reader.join()
+            process.stdout.close()
+            process.stderr.close()
+        except OSError as error:
+            raise ProtocolError(f"could not start adapter: {error}") from error
+    if overflow.is_set():
         raise ProtocolError("adapter output exceeded its byte limit")
+    if time.monotonic() >= deadline and returncode != 0:
+        raise ProtocolError("adapter exceeded its time limit")
+    if returncode != 0:
+        raise ProtocolError(f"adapter exited with status {returncode}")
     try:
-        stdout = completed.stdout.decode("utf-8")
-        stderr = completed.stderr.decode("utf-8")
+        stdout = output.decode("utf-8")
+        stderr = errors.decode("utf-8")
     except UnicodeDecodeError as error:
         raise ProtocolError("adapter output is not valid UTF-8") from error
     lines = stdout.splitlines()

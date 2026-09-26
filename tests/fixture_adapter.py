@@ -1,5 +1,6 @@
 import json
 import sys
+import time
 
 mode = sys.argv[1]
 _request = sys.stdin.readline()
@@ -13,3 +14,9 @@ elif mode == "many":
         print(json.dumps(proposal))
 elif mode == "fail":
     raise SystemExit(7)
+elif mode == "output-overflow":
+    sys.stdout.write("x" * (65 * 1024))
+elif mode == "error-overflow":
+    sys.stderr.write("x" * (65 * 1024))
+elif mode == "timeout":
+    time.sleep(2)

@@ -44,7 +44,10 @@ class AdapterTests(unittest.TestCase):
     def test_malformed_and_extended_proposals_fail_closed(self):
         with tempfile.TemporaryDirectory() as directory:
             broker, _ = self.broker(Path(directory))
-            for mode in ("malformed", "unknown-field", "many", "fail"):
+            for mode in (
+                "malformed", "unknown-field", "many", "fail",
+                "output-overflow", "error-overflow",
+            ):
                 with self.subTest(mode=mode), self.assertRaises(ProtocolError):
                     run_adapter([sys.executable, str(FIXTURE), mode], {}, broker)
 
@@ -58,6 +61,12 @@ class AdapterTests(unittest.TestCase):
         self.assertIn("PATH", visible)
         self.assertIn("PYTHONIOENCODING", visible)
         self.assertNotIn("FIREBREAK_PARENT_SECRET", visible)
+
+    def test_adapter_timeout_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            broker, _ = self.broker(Path(directory))
+            with self.assertRaisesRegex(ProtocolError, "time limit"):
+                run_adapter([sys.executable, str(FIXTURE), "timeout"], {}, broker, timeout=0.05)
 
 
 if __name__ == "__main__":
