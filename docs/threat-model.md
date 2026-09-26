@@ -30,6 +30,8 @@ authority.
     cannot target cursor or evidence state.
 12. A bounded signed-tuple history is committed atomically in the same room-state document as the
     cursor, so replay observations cannot diverge from cursor progress.
+13. Persistent cursor files have a bounded, exact schema; malformed or extended local state fails
+    closed before any network request.
 
 Firebreak includes a bounded HTTP transport and an optional locked-down Docker boundary for locally
 trusted adapters. Docker and the host kernel remain trusted, and the portable subprocess runner is

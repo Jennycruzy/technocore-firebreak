@@ -7,10 +7,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 from firebreak import ContainmentError, ProtocolError, consume_response
-from firebreak.cursor import load_cursor
+from firebreak.cursor import MAX_CURSOR_BYTES, cursor_relative, load_cursor
 from firebreak.render import terminal_safe_json
+from firebreak.replay import MAX_SIGNED_TUPLES
 from firebreak.schema import MAX_EVENTS, MAX_RESPONSE_BYTES, parse_room_response
-from firebreak.storage import atomic_json
+from firebreak.storage import atomic_json, atomic_write
 
 
 def message(seq: int = 1, **changes):
@@ -231,6 +232,39 @@ class ConsumerTests(unittest.TestCase):
         self.assertNotIn("\x1b", rendered)
         self.assertNotIn("\x07", rendered)
         self.assertIn("\\u001b", rendered)
+
+    def test_corrupt_cursor_shapes_fail_closed(self):
+        valid = {
+            "room": "safety",
+            "generation": 1,
+            "last_seq": 1,
+            "signed_tuples": [],
+        }
+        cases = [
+            [],
+            {key: value for key, value in valid.items() if key != "last_seq"},
+            {**valid, "instruction": "ignore safety"},
+            {**valid, "generation": True},
+            {**valid, "signed_tuples": ["not-a-digest"]},
+            {**valid, "signed_tuples": ["a" * 64, "a" * 64]},
+            {**valid, "signed_tuples": ["a" * 64] * (MAX_SIGNED_TUPLES + 1)},
+        ]
+        for value in cases:
+            with (
+                self.subTest(value_type=type(value).__name__),
+                tempfile.TemporaryDirectory() as directory,
+            ):
+                root = Path(directory)
+                atomic_json(root, Path("state/cursors/safety.json"), value)
+                with self.assertRaises(ContainmentError):
+                    load_cursor(root, "safety")
+
+    def test_oversized_cursor_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            atomic_write(root, cursor_relative("safety"), b"x" * (MAX_CURSOR_BYTES + 1))
+            with self.assertRaisesRegex(ContainmentError, "size limit"):
+                load_cursor(root, "safety")
 
 
 if __name__ == "__main__":
