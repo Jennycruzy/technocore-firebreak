@@ -28,7 +28,8 @@ authority.
 11. A bounded signed-tuple history is committed atomically in the same room-state document as the
     cursor, so replay observations cannot diverge from cursor progress.
 
-Firebreak currently accepts already-fetched bytes. It does not yet provide a live network transport,
-OS sandbox, or model integration. Its broker makes and tests capability decisions but supports only
-fake or explicitly configured executors. Those
-limitations are explicit so ingestion guarantees are not confused with future guarantees.
+Firebreak includes a bounded HTTP transport and an optional locked-down Docker boundary for locally
+trusted adapters. Docker and the host kernel remain trusted, and the portable subprocess runner is
+not an OS sandbox. Firebreak does not include model-provider integration or grant an adapter direct
+access to effectful executors. The broker supports fake or explicitly configured executors so every
+effect remains visible and testable.

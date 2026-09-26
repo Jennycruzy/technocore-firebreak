@@ -28,3 +28,7 @@ To exercise stronger adapter isolation:
 docker build -f docker/adapter.Dockerfile -t technocore-firebreak-adapter:0.1.0 .
 firebreak certify --docker-image technocore-firebreak-adapter:0.1.0 --output evidence
 ```
+
+The CircleCI workflow repeats the portable checks on Linux, macOS, and Windows, tests the built wheel
+from outside the source tree, and runs container certification with a remote Docker environment. Each
+certification job retains its evidence directory as an artifact.

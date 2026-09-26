@@ -11,6 +11,7 @@ Related upstream work is treated as an input rather than duplicated:
 - issue #542 describes URL-effect classification;
 - issue #825 records an independent protocol conformance suite.
 
-The current implementation establishes the transactional ingestion boundary needed by the later
-capability broker. Future work will pin and consume PR #555 at an exact commit while keeping
-Firebreak-only runtime cases in a separate corpus.
+Firebreak pins and independently verifies PR #555's corpus, then drives those records through a real
+adapter and capability broker. It adds runtime effect canaries, transactional cursor and replay
+state, bounded transport and adapter execution, reproducible evidence, and optional container
+isolation without creating a competing fixture set.

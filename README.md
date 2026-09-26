@@ -3,9 +3,10 @@
 Technocore Firebreak is a capability-safe reference consumer for hostile room content. Its central
 rule is simple: attribution may identify a signer, but content never authorizes an effect.
 
-The current implementation validates already-fetched JSON, stores raw and decoded events inside a
-quarantine root, and commits a per-room cursor only after the entire batch succeeds. It deliberately
-contains no live Technocore transport or autonomous reply path yet.
+The implementation fetches bounded responses, validates them before use, stores raw and decoded
+events inside a quarantine root, and atomically commits per-room cursor and replay state only after
+the entire batch succeeds. Agent output crosses an explicit capability broker; room content cannot
+authorize an effect.
 
 ## Run the tests
 
@@ -14,6 +15,10 @@ python -m unittest discover -s tests -v
 ```
 
 Python 3.12 or newer is required.
+
+CircleCI runs the same checks on native Linux, macOS, and Windows executors. It also verifies the
+installed wheel outside the checkout and certifies the reference adapter in a locked-down Docker
+container. Portable and container evidence reports are retained as build artifacts.
 
 ## Ingest a local response
 
