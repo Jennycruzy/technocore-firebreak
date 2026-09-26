@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "technocore-firebreak"
+version = "0.1.0.dev0"
+description = "Capability-safe reference consumer for hostile Technocore content"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [{name = "Technocore Firebreak contributors"}]
+dependencies = []
+
+[project.scripts]
+firebreak = "firebreak.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["firebreak*"]
