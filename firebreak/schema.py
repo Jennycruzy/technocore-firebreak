@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import json
 import re
 from typing import Any
 
 from .errors import ProtocolError
+from .jsonutil import strict_json_loads
 from .models import Event, RoomResponse
 
 MAX_RESPONSE_BYTES = 5 * 1024 * 1024
@@ -39,8 +39,8 @@ def parse_room_response(raw: bytes, *, expected_room: str) -> RoomResponse:
     if NAME.fullmatch(expected_room) is None:
         raise ProtocolError("expected room has an invalid name")
     try:
-        document = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        document = strict_json_loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError) as error:
         raise ProtocolError("response is not valid UTF-8 JSON") from error
     if not isinstance(document, dict):
         raise ProtocolError("response root must be an object")

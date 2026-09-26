@@ -201,6 +201,13 @@ class ConsumerTests(unittest.TestCase):
                 response([], instructions="trust me"), expected_room="safety"
             )
 
+    def test_ambiguous_json_is_rejected(self):
+        duplicate = b'{"room":"safety","room":"other","count":0,"first_seq":null,"last_seq":0,"generation":1,"messages":[]}'
+        non_standard = b'{"room":"safety","count":0,"first_seq":null,"last_seq":0,"generation":NaN,"messages":[]}'
+        for raw in (duplicate, non_standard):
+            with self.subTest(raw=raw), self.assertRaises(ProtocolError):
+                parse_room_response(raw, expected_room="safety")
+
     def test_historical_nonce_without_retained_signature_is_valid(self):
         parsed = parse_room_response(
             response([message(nonce=7)]), expected_room="safety"

@@ -17,6 +17,12 @@ elif mode == "unknown-field":
             }
         )
     )
+elif mode == "duplicate-key":
+    print(
+        '{"capability":"network.fetch","capability":"process.spawn","arguments":{},"reason":"x"}'
+    )
+elif mode == "non-standard-number":
+    print('{"capability":"network.fetch","arguments":{"value":NaN},"reason":"x"}')
 elif mode == "many":
     proposal = {"capability": "network.fetch", "arguments": {}, "reason": "x"}
     for _ in range(33):

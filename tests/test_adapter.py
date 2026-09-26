@@ -52,6 +52,8 @@ class AdapterTests(unittest.TestCase):
             for mode in (
                 "malformed",
                 "unknown-field",
+                "duplicate-key",
+                "non-standard-number",
                 "many",
                 "fail",
                 "output-overflow",

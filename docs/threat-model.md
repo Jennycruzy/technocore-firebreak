@@ -34,6 +34,7 @@ authority.
     closed before any network request.
 14. A cross-platform per-room lock prevents concurrent consumers from processing the same cursor
     state; contention fails before adapter execution.
+15. Duplicate object keys and non-standard constants are rejected at every untrusted JSON boundary.
 
 Firebreak includes a bounded HTTP transport and an optional locked-down Docker boundary for locally
 trusted adapters. Docker and the host kernel remain trusted, and the portable subprocess runner is

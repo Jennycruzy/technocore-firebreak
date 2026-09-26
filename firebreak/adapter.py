@@ -14,6 +14,7 @@ from typing import Any
 
 from .broker import CapabilityBroker, Decision, Proposal
 from .errors import ProtocolError
+from .jsonutil import strict_json_loads
 
 MAX_ADAPTER_OUTPUT = 64 * 1024
 MAX_PROPOSALS = 32
@@ -134,8 +135,8 @@ def run_adapter(
     proposals: list[Proposal] = []
     for index, line in enumerate(lines):
         try:
-            value = json.loads(line)
-        except json.JSONDecodeError as error:
+            value = strict_json_loads(line)
+        except ValueError as error:
             raise ProtocolError(f"adapter proposal {index} is not JSON") from error
         proposals.append(_proposal(value, index))
     decisions = tuple(broker.decide(proposal) for proposal in proposals)

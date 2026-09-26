@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import asdict
 from pathlib import Path
 
 from .errors import ContainmentError, ProtocolError
+from .jsonutil import strict_json_loads
 from .models import CursorState
 from .replay import MAX_SIGNED_TUPLES
 from .storage import atomic_json, contained_path
@@ -31,7 +31,7 @@ def load_cursor(root: Path, room: str) -> CursorState | None:
     if len(raw) > MAX_CURSOR_BYTES:
         raise ContainmentError(f"cursor for {room} exceeds its size limit")
     try:
-        value = json.loads(raw.decode("utf-8"))
+        value = strict_json_loads(raw.decode("utf-8"))
         if not isinstance(value, dict) or set(value) != CURSOR_FIELDS:
             raise TypeError
         tuples = value["signed_tuples"]
@@ -51,7 +51,7 @@ def load_cursor(root: Path, room: str) -> CursorState | None:
             last_seq=value["last_seq"],
             signed_tuples=tuple(tuples),
         )
-    except (KeyError, UnicodeDecodeError, json.JSONDecodeError, TypeError) as error:
+    except (KeyError, UnicodeDecodeError, ValueError, TypeError) as error:
         raise ContainmentError(f"cursor for {room} is corrupt") from error
     if not isinstance(state.room, str) or state.room != room:
         raise ContainmentError(f"cursor for {room} names a different room")

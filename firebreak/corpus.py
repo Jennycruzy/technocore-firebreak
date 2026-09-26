@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import platform
 from pathlib import Path
 from typing import Any
@@ -11,6 +10,7 @@ from typing import Any
 import cryptography
 
 from .errors import ProtocolError
+from .jsonutil import strict_json_loads
 from .policy import ReplayState, classify
 from .storage import atomic_json, atomic_write
 
@@ -26,8 +26,8 @@ def install(raw: bytes, destination: Path = VENDORED) -> None:
     if digest != UPSTREAM_SHA256:
         raise ProtocolError(f"upstream corpus hash mismatch: {digest}")
     try:
-        value = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        value = strict_json_loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError) as error:
         raise ProtocolError("upstream corpus is not valid UTF-8 JSON") from error
     if value.get("schema_version") != 1 or not isinstance(value.get("cases"), list):
         raise ProtocolError("unsupported upstream corpus schema")
@@ -42,7 +42,12 @@ def load(path: Path = VENDORED) -> dict[str, Any]:
         PACKAGED_SHA256,
     }:
         raise ProtocolError("vendored upstream corpus does not match its pinned hash")
-    value = json.loads(raw.decode("utf-8"))
+    try:
+        value = strict_json_loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError) as error:
+        raise ProtocolError(
+            "consumer-safety corpus is not valid strict JSON"
+        ) from error
     if not isinstance(value, dict) or not isinstance(value.get("cases"), list):
         raise ProtocolError("invalid consumer-safety corpus")
     return value
