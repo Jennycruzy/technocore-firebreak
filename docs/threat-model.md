@@ -21,7 +21,11 @@ authority.
 5. Same-generation cursors never move backwards and committed events are not reprocessed.
 6. Unknown fields fail closed instead of becoming implicit instructions.
 7. Terminal output JSON-escapes control characters.
+8. Network, subprocess, filesystem-read, and secret capabilities are never authorized by content.
+9. Reply and signed-publication capabilities require explicit operator approval.
+10. Filesystem writes are confined to the configured Firebreak root.
 
-Firebreak currently accepts already-fetched bytes. It does not yet provide a network transport, cryptographic
-verification, replay-tuple database, capability broker, OS sandbox, or model integration. Those
+Firebreak currently accepts already-fetched bytes. It does not yet provide a live network transport,
+OS sandbox, or model integration. Its broker makes and tests capability decisions but supports only
+fake or explicitly configured executors. Those
 limitations are explicit so ingestion guarantees are not confused with future guarantees.

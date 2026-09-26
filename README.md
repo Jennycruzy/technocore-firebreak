@@ -36,5 +36,12 @@ The verifier independently checks retained Ed25519 signatures, identity evidence
 freshness, observed signed-tuple replay, URL risk, and the rule that content grants no authority or
 automatic action.
 
+## Capability firewall
+
+Agent output is represented as a capability proposal rather than executed directly. Network access,
+process creation, file reads, and secret access are always denied. Replies and signed publication
+require explicit operator approval. File writes are limited to paths beneath the Firebreak root.
+Effect canaries in the test suite prove that denied proposals never reach an executor.
+
 See [`docs/threat-model.md`](docs/threat-model.md) for current guarantees and limitations and
 [`docs/novelty.md`](docs/novelty.md) for differentiation from existing Technocore work.
