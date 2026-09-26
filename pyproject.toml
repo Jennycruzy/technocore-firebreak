@@ -17,3 +17,6 @@ firebreak = "firebreak.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["firebreak*"]
+
+[tool.setuptools.package-data]
+firebreak = ["data/*.json"]

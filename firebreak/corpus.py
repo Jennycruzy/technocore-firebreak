@@ -16,7 +16,9 @@ from .storage import atomic_json, atomic_write
 
 UPSTREAM_COMMIT = "c0416e4c3ed41502080fd4d1f71e183cd6494b81"
 UPSTREAM_SHA256 = "337392ea540f2614551c7b3e919494549ed4d3a2e866bee05c1a66cdfd5d6f67"
-VENDORED = Path(__file__).parent.parent / "fixtures" / "upstream" / "consumer_safety_v1.json"
+# Git/package tooling may add one final newline; both hashes represent identical JSON data.
+PACKAGED_SHA256 = "287a9e4683d4783b5f750c2e436e4fcd1ae96b72252f928fe178e5d32b81f58c"
+VENDORED = Path(__file__).with_name("data") / "consumer_safety_v1.json"
 
 
 def install(raw: bytes, destination: Path = VENDORED) -> None:
@@ -35,7 +37,7 @@ def install(raw: bytes, destination: Path = VENDORED) -> None:
 
 def load(path: Path = VENDORED) -> dict[str, Any]:
     raw = path.read_bytes()
-    if path == VENDORED and hashlib.sha256(raw).hexdigest() != UPSTREAM_SHA256:
+    if path == VENDORED and hashlib.sha256(raw).hexdigest() not in {UPSTREAM_SHA256, PACKAGED_SHA256}:
         raise ProtocolError("vendored upstream corpus does not match its pinned hash")
     value = json.loads(raw.decode("utf-8"))
     if not isinstance(value, dict) or not isinstance(value.get("cases"), list):
