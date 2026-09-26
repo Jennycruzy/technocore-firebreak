@@ -67,5 +67,10 @@ firebreak run safety --base-url http://127.0.0.1:8080 --root .firebreak
 
 The cursor is committed only after every event has been quarantined and processed successfully.
 
+For stronger Linux isolation, run adapter certification through the included non-root container with
+networking disabled, a read-only filesystem, dropped capabilities, and bounded resources. See the
+[adapter protocol](docs/adapter-protocol.md#container-isolation) for the exact command and trust
+boundary.
+
 See [`docs/threat-model.md`](docs/threat-model.md) for current guarantees and limitations and
 [`docs/novelty.md`](docs/novelty.md) for differentiation from existing Technocore work.

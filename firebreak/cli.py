@@ -11,6 +11,7 @@ from .corpus import install, verify, write_evidence
 from .errors import FirebreakError
 from .render import terminal_safe_json
 from .pipeline import process_room
+from .isolation import docker_adapter_command
 
 
 def parser() -> argparse.ArgumentParser:
@@ -31,6 +32,7 @@ def parser() -> argparse.ArgumentParser:
     certification = subcommands.add_parser("certify", help="certify an adapter against hostile records")
     certification.add_argument("--output", type=Path, default=Path("evidence"))
     certification.add_argument("--root", type=Path, default=Path(".firebreak"))
+    certification.add_argument("--docker-image")
     certification.add_argument("adapter", nargs=argparse.REMAINDER)
     run = subcommands.add_parser("run", help="process one room response through the full pipeline")
     run.add_argument("room")
@@ -52,7 +54,10 @@ def main(argv: list[str] | None = None) -> int:
             print(terminal_safe_json(report))
             return 0 if report["passed"] else 1
         if args.command == "certify":
-            report = certify(args.root, command=args.adapter or None)
+            if args.docker_image and args.adapter:
+                raise ValueError("choose either --docker-image or an adapter command")
+            command = docker_adapter_command(args.docker_image) if args.docker_image else (args.adapter or None)
+            report = certify(args.root, command=command)
             write_certification(report, args.output)
             print(terminal_safe_json(report))
             return 0 if report["passed"] else 1

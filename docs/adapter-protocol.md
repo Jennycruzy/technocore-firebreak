@@ -14,3 +14,17 @@ its own process variables. These restrictions reduce accidental exposure; they a
 security sandbox. Run only locally trusted adapter programs until an isolated Linux runner is
 available. The capability broker remains the boundary for every proposal returned through this
 protocol.
+
+## Container isolation
+
+On a host with Docker, build and certify the reference adapter inside a stronger isolation boundary:
+
+```console
+docker build -f docker/adapter.Dockerfile -t technocore-firebreak-adapter:test .
+firebreak certify --docker-image technocore-firebreak-adapter:test --output evidence
+```
+
+Firebreak starts the container with no network, a read-only root filesystem, all Linux capabilities
+dropped, `no-new-privileges`, a non-root user, PID/CPU/memory limits, and a small non-executable
+temporary filesystem. It mounts no host directory and forwards no credential or secret environment
+variables. Docker and the host kernel remain trusted components of this boundary.
