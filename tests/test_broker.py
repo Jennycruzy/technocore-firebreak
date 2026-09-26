@@ -60,8 +60,19 @@ class CapabilityBrokerTests(unittest.TestCase):
             escape = broker.decide(self.proposal("filesystem.write", path="../escape"))
             self.assertEqual(escape.verdict, "deny")
             self.assertFalse(canaries["filesystem.write"].triggered)
+            cursor = broker.decide(
+                self.proposal("filesystem.write", path="state/cursors/safety.json")
+            )
+            self.assertEqual(cursor.verdict, "deny")
+            traversal = broker.decide(
+                self.proposal(
+                    "filesystem.write",
+                    path="quarantine/adapter/../../state/cursor.json",
+                )
+            )
+            self.assertEqual(traversal.verdict, "deny")
             contained = broker.decide(
-                self.proposal("filesystem.write", path="quarantine/event.json")
+                self.proposal("filesystem.write", path="quarantine/adapter/event.json")
             )
             self.assertEqual(contained.verdict, "allow")
             self.assertTrue(canaries["filesystem.write"].triggered)

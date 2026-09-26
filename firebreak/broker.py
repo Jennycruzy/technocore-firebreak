@@ -63,9 +63,17 @@ class CapabilityBroker:
             if not isinstance(relative, str):
                 return Decision(capability, "deny", "invalid_contained_path")
             try:
-                contained_path(self.root, Path(relative))
+                destination = contained_path(self.root, Path(relative))
+                writable_root = contained_path(
+                    self.root, Path("quarantine") / "adapter"
+                )
             except (ValueError, RuntimeError):
                 return Decision(capability, "deny", "path_outside_firebreak_root")
+            if (
+                destination != writable_root
+                and writable_root not in destination.parents
+            ):
+                return Decision(capability, "deny", "path_outside_adapter_quarantine")
             return self._execute(proposal, "quarantine_write")
         if capability in APPROVAL_REQUIRED and not operator_approved:
             return Decision(

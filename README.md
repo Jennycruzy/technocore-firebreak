@@ -40,7 +40,8 @@ automatic action.
 
 Agent output is represented as a capability proposal rather than executed directly. Network access,
 process creation, file reads, and secret access are always denied. Replies and signed publication
-require explicit operator approval. File writes are limited to paths beneath the Firebreak root.
+require explicit operator approval. Adapter file writes are limited to the dedicated
+`quarantine/adapter/` subtree and cannot modify cursor or evidence state.
 Effect canaries in the test suite prove that denied proposals never reach an executor.
 
 The included deliberately suggestible reference adapter turns hostile text into unsafe capability
