@@ -21,6 +21,7 @@ def consume_response(
     room: str,
     root: Path,
     on_event: Callable[[dict[str, object], bool], None] | None = None,
+    before_commit: Callable[[IngestionResult], None] | None = None,
 ) -> IngestionResult:
     response = parse_room_response(raw, expected_room=room)
     previous = load_cursor(root, room)
@@ -58,8 +59,7 @@ def consume_response(
     next_state = CursorState(
         room, response.generation, response.last_seq, tuple(history)
     )
-    commit_cursor(root, next_state)
-    return IngestionResult(
+    result = IngestionResult(
         room=room,
         generation=response.generation,
         previous_cursor=previous.last_seq if previous else None,
@@ -68,3 +68,7 @@ def consume_response(
         replayed_events=replayed_events,
         batch_sha256=batch_digest,
     )
+    if before_commit is not None:
+        before_commit(result)
+    commit_cursor(root, next_state)
+    return result

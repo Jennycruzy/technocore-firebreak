@@ -17,7 +17,8 @@ authority.
 1. The whole response is validated before any local write.
 2. Rejected protocol input does not advance persistent state.
 3. Accepted raw bytes and decoded events are written only below the configured root.
-4. Cursor state is replaced atomically after quarantine writes succeed.
+4. Cursor state is replaced atomically only after quarantine, adapter processing, and durable run
+   evidence succeed.
 5. Same-generation cursors never move backwards and committed events are not reprocessed.
 6. Event sequences must be contiguous, empty responses cannot advance state, and subsequent fetches
    continue from the persisted cursor.

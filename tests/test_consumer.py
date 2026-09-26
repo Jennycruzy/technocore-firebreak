@@ -99,6 +99,18 @@ class ConsumerTests(unittest.TestCase):
                 consume_response(raw, room="safety", root=root, on_event=fail)
             self.assertIsNone(load_cursor(root, "safety"))
 
+    def test_precommit_failure_never_commits_cursor(self):
+        raw = response([message()])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+
+            def fail(_result):
+                raise RuntimeError("evidence failed")
+
+            with self.assertRaisesRegex(RuntimeError, "evidence failed"):
+                consume_response(raw, room="safety", root=root, before_commit=fail)
+            self.assertIsNone(load_cursor(root, "safety"))
+
     def test_committed_cursor_cannot_move_backwards(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -7,7 +7,9 @@ import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import ClassVar
+from unittest.mock import patch
 
+from firebreak import ContainmentError
 from firebreak.cursor import load_cursor
 from firebreak.pipeline import process_room
 
@@ -105,6 +107,31 @@ class PipelineTests(unittest.TestCase):
             root = Path(directory)
             with self.assertRaisesRegex(ValueError, "skip"):
                 process_room("http://127.0.0.1:1", "safety", root, since=8)
+
+    def test_evidence_failure_never_commits_cursor(self):
+        server = ThreadingHTTPServer(("127.0.0.1", 0), HostileHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                with (
+                    patch(
+                        "firebreak.pipeline.atomic_json",
+                        side_effect=ContainmentError("injected evidence failure"),
+                    ),
+                    self.assertRaisesRegex(ContainmentError, "evidence failure"),
+                ):
+                    process_room(
+                        f"http://127.0.0.1:{server.server_port}",
+                        "safety",
+                        root,
+                    )
+                self.assertIsNone(load_cursor(root, "safety"))
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
 
 
 if __name__ == "__main__":
