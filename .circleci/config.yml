@@ -1,5 +1,10 @@
 version: 2.1
 
+parameters:
+  run_macos:
+    type: boolean
+    default: false
+
 orbs:
   win: circleci/windows@5.0
 
@@ -58,10 +63,18 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Select Python 3.12
-          command: py -3.12 --version
-      - install_and_verify:
-          python: py -3.12
+          name: Install and verify with Python 3.12
+          command: |
+            choco install python312 -y --no-progress
+            Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+            refreshenv
+            py -3.12 --version
+            py -3.12 -m pip install ".[dev]"
+            py -3.12 -m ruff check .
+            py -3.12 -m ruff format --check .
+            py -3.12 -W error::ResourceWarning -m unittest discover -s tests -v
+            py -3.12 -m firebreak corpus verify --output evidence
+            py -3.12 -m firebreak certify --output evidence
       - store_artifacts:
           path: evidence
           destination: windows-evidence
@@ -109,7 +122,10 @@ workflows:
   verify:
     jobs:
       - linux
-      - macos
       - windows
       - container
       - wheel
+  verify_macos:
+    when: << pipeline.parameters.run_macos >>
+    jobs:
+      - macos

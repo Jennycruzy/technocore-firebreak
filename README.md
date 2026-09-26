@@ -16,9 +16,10 @@ python -m unittest discover -s tests -v
 
 Python 3.12 or newer is required.
 
-CircleCI runs the same checks on native Linux, macOS, and Windows executors. It also verifies the
-installed wheel outside the checkout and certifies the reference adapter in a locked-down Docker
-container. Portable and container evidence reports are retained as build artifacts.
+CircleCI runs the same checks on native Linux and Windows executors. It also verifies the installed
+wheel outside the checkout and certifies the reference adapter in a locked-down Docker container.
+An opt-in native macOS workflow is included for CircleCI plans with macOS capacity; the portable
+suite is also developed and verified on macOS. Evidence reports are retained as build artifacts.
 
 ## Ingest a local response
 
