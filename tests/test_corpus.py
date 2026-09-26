@@ -31,9 +31,11 @@ class CorpusTests(unittest.TestCase):
         self.assertFalse(verify_record(invalid["room"], invalid["record"]))
 
     def test_modified_corpus_cannot_be_installed(self):
-        with tempfile.TemporaryDirectory() as directory:
-            with self.assertRaises(ProtocolError):
-                install(b"{}", Path(directory) / "corpus.json")
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            self.assertRaises(ProtocolError),
+        ):
+            install(b"{}", Path(directory) / "corpus.json")
 
     def test_evidence_contains_no_untrusted_message_text(self):
         encoded = json.dumps(verify(), sort_keys=True)

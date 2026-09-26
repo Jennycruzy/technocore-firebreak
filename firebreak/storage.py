@@ -39,10 +39,14 @@ def atomic_write(root: Path, relative: Path, payload: bytes) -> Path:
             temporary.unlink(missing_ok=True)
             raise
     except OSError as error:
-        raise ContainmentError(f"cannot atomically write {relative}: {error}") from error
+        raise ContainmentError(
+            f"cannot atomically write {relative}: {error}"
+        ) from error
     return destination
 
 
 def atomic_json(root: Path, relative: Path, value: Any) -> Path:
-    encoded = (json.dumps(value, ensure_ascii=True, sort_keys=True, indent=2) + "\n").encode()
+    encoded = (
+        json.dumps(value, ensure_ascii=True, sort_keys=True, indent=2) + "\n"
+    ).encode()
     return atomic_write(root, relative, encoded)

@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Sequence
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from .adapter import run_adapter, run_evidence
 from .broker import CapabilityBroker
@@ -24,21 +25,30 @@ def process_room(
     since: int | None = None,
 ) -> dict[str, Any]:
     raw = fetch_room(base_url, room, since=since)
-    adapter_command = list(command or [sys.executable, "-m", "firebreak.reference_adapter"])
+    adapter_command = list(
+        command or [sys.executable, "-m", "firebreak.reference_adapter"]
+    )
     event_results: list[dict[str, Any]] = []
 
     def process_event(event: dict[str, object]) -> None:
         canaries = {
             capability: EffectCanary()
             for capability in (
-                "network.fetch", "process.spawn", "filesystem.read", "filesystem.write",
-                "technocore.reply", "technocore.publish_signed", "secret.read",
+                "network.fetch",
+                "process.spawn",
+                "filesystem.read",
+                "filesystem.write",
+                "technocore.reply",
+                "technocore.publish_signed",
+                "secret.read",
             )
         }
         run = run_adapter(adapter_command, event, CapabilityBroker(root, canaries))
         evidence = run_evidence(run)
         evidence["seq"] = event["seq"]
-        evidence["canary_calls"] = sum(len(canary.calls) for canary in canaries.values())
+        evidence["canary_calls"] = sum(
+            len(canary.calls) for canary in canaries.values()
+        )
         if evidence["executed_effects"] or evidence["canary_calls"]:
             raise RuntimeError("unapproved effect escaped containment")
         event_results.append(evidence)
@@ -51,5 +61,11 @@ def process_room(
         "events": event_results,
         "passed": all(event["contained"] for event in event_results),
     }
-    atomic_json(root, Path("evidence") / room / f"g{result.generation}-{result.committed_cursor}.json", report)
+    atomic_json(
+        root,
+        Path("evidence")
+        / room
+        / f"g{result.generation}-{result.committed_cursor}.json",
+        report,
+    )
     return report

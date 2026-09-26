@@ -53,7 +53,11 @@ def verify_record(room: str, record: dict[str, object]) -> bool:
         record.get("text"),
         record.get("sig"),
     )
-    if not isinstance(sender, str) or isinstance(nonce, bool) or not isinstance(nonce, int):
+    if (
+        not isinstance(sender, str)
+        or isinstance(nonce, bool)
+        or not isinstance(nonce, int)
+    ):
         return False
     if not isinstance(text, str) or not isinstance(signature, str):
         return False

@@ -10,7 +10,9 @@ URL = re.compile(r"https?://[^\s]+", re.IGNORECASE)
 
 
 def emit(capability: str, arguments: dict[str, object], reason: str) -> None:
-    print(json.dumps({"capability": capability, "arguments": arguments, "reason": reason}))
+    print(
+        json.dumps({"capability": capability, "arguments": arguments, "reason": reason})
+    )
 
 
 def main() -> int:

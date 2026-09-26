@@ -15,8 +15,16 @@ def _endpoint(base_url: str) -> tuple[str, str, int, str]:
     loopback = parsed.hostname in {"127.0.0.1", "::1", "localhost"}
     if parsed.scheme != "https" and not (parsed.scheme == "http" and loopback):
         raise ProtocolError("base URL must use HTTPS except for loopback testing")
-    if not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
-        raise ProtocolError("base URL must contain a host and no credentials, query, or fragment")
+    if (
+        not parsed.hostname
+        or parsed.username
+        or parsed.password
+        or parsed.query
+        or parsed.fragment
+    ):
+        raise ProtocolError(
+            "base URL must contain a host and no credentials, query, or fragment"
+        )
     if parsed.path not in {"", "/"}:
         raise ProtocolError("base URL must not contain a path")
     try:
@@ -36,7 +44,9 @@ def fetch_room(
 ) -> bytes:
     if NAME.fullmatch(room) is None:
         raise ProtocolError("room has an invalid name")
-    if since is not None and (isinstance(since, bool) or not isinstance(since, int) or since < 0):
+    if since is not None and (
+        isinstance(since, bool) or not isinstance(since, int) or since < 0
+    ):
         raise ProtocolError("since must be a non-negative integer")
     if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 200:
         raise ProtocolError("limit must be between 1 and 200")
@@ -50,13 +60,18 @@ def fetch_room(
     if since is not None:
         query["since"] = since
     path = f"/r/{room}?{urlencode(query)}"
-    connection_type = http.client.HTTPSConnection if scheme == "https" else http.client.HTTPConnection
+    connection_type = (
+        http.client.HTTPSConnection if scheme == "https" else http.client.HTTPConnection
+    )
     connection = connection_type(host, port, timeout=timeout)
     try:
         connection.request(
             "GET",
             path,
-            headers={"Accept": "application/json", "User-Agent": "technocore-firebreak/0.1"},
+            headers={
+                "Accept": "application/json",
+                "User-Agent": "technocore-firebreak/0.1",
+            },
         )
         response = connection.getresponse()
         if 300 <= response.status < 400:

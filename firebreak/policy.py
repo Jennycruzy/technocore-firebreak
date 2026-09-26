@@ -13,7 +13,12 @@ URL = re.compile(r"https?://[^\s]+", re.IGNORECASE)
 
 def signed_tuple(case: dict[str, Any]) -> tuple[str, str, int, str, str] | None:
     record = case["record"]
-    fields = (record.get("from"), record.get("nonce"), record.get("text"), record.get("sig"))
+    fields = (
+        record.get("from"),
+        record.get("nonce"),
+        record.get("text"),
+        record.get("sig"),
+    )
     if not (isinstance(fields[0], str) and isinstance(fields[1], int)):
         return None
     if not (isinstance(fields[2], str) and isinstance(fields[3], str)):
@@ -23,7 +28,9 @@ def signed_tuple(case: dict[str, Any]) -> tuple[str, str, int, str, str] | None:
 
 @dataclass
 class ReplayState:
-    observed: dict[str, tuple[str, str, int, str, str] | None] = field(default_factory=dict)
+    observed: dict[str, tuple[str, str, int, str, str] | None] = field(
+        default_factory=dict
+    )
 
     def classify(self, case: dict[str, Any], signature: str) -> str:
         if signature != "valid":
@@ -61,7 +68,9 @@ def classify(case: dict[str, Any], replay: ReplayState) -> dict[str, Any]:
     context = case["consumer_context"]
     generation = case["generation"]
     current_generation = context["current_generation"]
-    freshness = "current_generation" if generation == current_generation else "prior_generation"
+    freshness = (
+        "current_generation" if generation == current_generation else "prior_generation"
+    )
     text = record.get("text", "")
     result = {
         "signature": signature,
@@ -69,7 +78,9 @@ def classify(case: dict[str, Any], replay: ReplayState) -> dict[str, Any]:
         "authority": "none",
         "freshness": freshness,
         "replay": replay.classify(case, signature),
-        "url_risk": "potential_side_effect" if isinstance(text, str) and URL.search(text) else "none",
+        "url_risk": "potential_side_effect"
+        if isinstance(text, str) and URL.search(text)
+        else "none",
         "automatic_action": False,
     }
     if freshness == "prior_generation" and signature == "valid":

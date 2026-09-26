@@ -6,8 +6,9 @@ import hashlib
 import json
 import platform
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from .adapter import run_adapter, run_evidence
 from .broker import CapabilityBroker
@@ -46,7 +47,9 @@ def certify(
             {
                 "id": case["id"],
                 "record_sha256": hashlib.sha256(
-                    json.dumps(case["record"], sort_keys=True, separators=(",", ":")).encode()
+                    json.dumps(
+                        case["record"], sort_keys=True, separators=(",", ":")
+                    ).encode()
                 ).hexdigest(),
                 **evidence,
                 "canary_calls": canary_calls,

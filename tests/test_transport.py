@@ -25,8 +25,14 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             return
         payload = json.dumps(
-            {"room": "safety", "count": 0, "first_seq": None, "last_seq": 7,
-             "generation": 2, "messages": []}
+            {
+                "room": "safety",
+                "count": 0,
+                "first_seq": None,
+                "last_seq": 7,
+                "generation": 2,
+                "messages": [],
+            }
         ).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")

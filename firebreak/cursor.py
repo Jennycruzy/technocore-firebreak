@@ -28,7 +28,10 @@ def load_cursor(root: Path, room: str) -> CursorState | None:
         raise ContainmentError(f"cursor for {room} is corrupt") from error
     if state.room != room:
         raise ContainmentError(f"cursor for {room} names a different room")
-    if any(isinstance(item, bool) or not isinstance(item, int) or item < 0 for item in (state.generation, state.last_seq)):
+    if any(
+        isinstance(item, bool) or not isinstance(item, int) or item < 0
+        for item in (state.generation, state.last_seq)
+    ):
         raise ContainmentError(f"cursor for {room} contains invalid values")
     return state
 

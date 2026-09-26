@@ -70,14 +70,17 @@ class CapabilityBrokerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             broker, canaries = self.broker(Path(directory))
             decision = broker.decide(self.proposal("wallet.transfer", amount="all"))
-            self.assertEqual((decision.verdict, decision.rule), ("deny", "unknown_capability"))
+            self.assertEqual(
+                (decision.verdict, decision.rule), ("deny", "unknown_capability")
+            )
             self.assertTrue(all(not canary.triggered for canary in canaries.values()))
 
     def test_approval_does_not_override_always_denied_capabilities(self):
         with tempfile.TemporaryDirectory() as directory:
             broker, canaries = self.broker(Path(directory))
             decision = broker.decide(
-                self.proposal("process.spawn", command=["whoami"]), operator_approved=True
+                self.proposal("process.spawn", command=["whoami"]),
+                operator_approved=True,
             )
             self.assertEqual(decision.verdict, "deny")
             self.assertFalse(canaries["process.spawn"].triggered)

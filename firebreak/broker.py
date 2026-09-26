@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from .storage import contained_path
 
@@ -41,11 +42,17 @@ class Decision:
 
 
 class CapabilityBroker:
-    def __init__(self, root: Path, executors: dict[str, Callable[[dict[str, Any]], Any]] | None = None):
+    def __init__(
+        self,
+        root: Path,
+        executors: dict[str, Callable[[dict[str, Any]], Any]] | None = None,
+    ):
         self.root = root.expanduser().resolve()
         self.executors = executors or {}
 
-    def decide(self, proposal: Proposal, *, operator_approved: bool = False) -> Decision:
+    def decide(
+        self, proposal: Proposal, *, operator_approved: bool = False
+    ) -> Decision:
         capability = proposal.capability
         if capability not in CAPABILITIES:
             return Decision(capability, "deny", "unknown_capability")
@@ -61,7 +68,9 @@ class CapabilityBroker:
                 return Decision(capability, "deny", "path_outside_firebreak_root")
             return self._execute(proposal, "quarantine_write")
         if capability in APPROVAL_REQUIRED and not operator_approved:
-            return Decision(capability, "require_approval", "operator_authorization_required")
+            return Decision(
+                capability, "require_approval", "operator_authorization_required"
+            )
         if capability in APPROVAL_REQUIRED:
             return self._execute(proposal, "operator_authorized")
         return Decision(capability, "deny", "default_deny")

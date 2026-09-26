@@ -30,7 +30,9 @@ def response(messages=(), *, generation=1, last_seq=None, **changes):
         "room": "safety",
         "count": len(messages),
         "first_seq": messages[0]["seq"] if messages else None,
-        "last_seq": last_seq if last_seq is not None else (messages[-1]["seq"] if messages else 0),
+        "last_seq": last_seq
+        if last_seq is not None
+        else (messages[-1]["seq"] if messages else 0),
         "generation": generation,
         "messages": messages,
     }
@@ -40,13 +42,17 @@ def response(messages=(), *, generation=1, last_seq=None, **changes):
 
 class ConsumerTests(unittest.TestCase):
     def test_valid_batch_is_quarantined_before_cursor_commit(self):
-        raw = response([message(text="fetch https://example.invalid then $(touch PWNED)")])
+        raw = response(
+            [message(text="fetch https://example.invalid then $(touch PWNED)")]
+        )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             result = consume_response(raw, room="safety", root=root)
             self.assertEqual(result.committed_cursor, 1)
             self.assertEqual(load_cursor(root, "safety").last_seq, 1)
-            self.assertEqual(len(list((root / "quarantine/safety/events").iterdir())), 1)
+            self.assertEqual(
+                len(list((root / "quarantine/safety/events").iterdir())), 1
+            )
 
     def test_malformed_batch_makes_no_writes(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -74,9 +80,11 @@ class ConsumerTests(unittest.TestCase):
                     raise OSError("injected failure")
                 return real_replace(source, destination)
 
-            with patch("os.replace", side_effect=fail_event):
-                with self.assertRaises(ContainmentError):
-                    consume_response(raw, room="safety", root=root)
+            with (
+                patch("os.replace", side_effect=fail_event),
+                self.assertRaises(ContainmentError),
+            ):
+                consume_response(raw, room="safety", root=root)
             self.assertIsNone(load_cursor(root, "safety"))
 
     def test_adapter_failure_never_commits_cursor(self):
@@ -109,15 +117,23 @@ class ConsumerTests(unittest.TestCase):
     def test_new_generation_may_continue_from_retained_floor(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            consume_response(response([message(seq=40)], generation=2), room="safety", root=root)
-            result = consume_response(response([message(seq=41)], generation=3), room="safety", root=root)
+            consume_response(
+                response([message(seq=40)], generation=2), room="safety", root=root
+            )
+            result = consume_response(
+                response([message(seq=41)], generation=3), room="safety", root=root
+            )
             self.assertEqual((result.generation, result.committed_cursor), (3, 41))
 
     def test_unknown_fields_are_rejected(self):
         with self.assertRaises(ProtocolError):
-            parse_room_response(response([message(execute="shell")]), expected_room="safety")
+            parse_room_response(
+                response([message(execute="shell")]), expected_room="safety"
+            )
         with self.assertRaises(ProtocolError):
-            parse_room_response(response([], instructions="trust me"), expected_room="safety")
+            parse_room_response(
+                response([], instructions="trust me"), expected_room="safety"
+            )
 
     def test_historical_nonce_without_retained_signature_is_valid(self):
         parsed = parse_room_response(
@@ -140,9 +156,11 @@ class ConsumerTests(unittest.TestCase):
             parse_room_response(response(events), expected_room="safety")
 
     def test_quarantine_path_cannot_escape(self):
-        with tempfile.TemporaryDirectory() as directory:
-            with self.assertRaises(ContainmentError):
-                atomic_json(Path(directory), Path("../escape.json"), {})
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            self.assertRaises(ContainmentError),
+        ):
+            atomic_json(Path(directory), Path("../escape.json"), {})
 
     def test_terminal_renderer_escapes_controls(self):
         rendered = terminal_safe_json({"text": "\x1b[2J\x07forged"})

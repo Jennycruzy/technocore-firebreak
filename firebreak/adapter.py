@@ -8,9 +8,9 @@ import subprocess
 import tempfile
 import threading
 import time
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
-from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from .broker import CapabilityBroker, Decision, Proposal
 from .errors import ProtocolError
@@ -27,9 +27,17 @@ class AdapterRun:
 
 
 def _proposal(value: Any, index: int) -> Proposal:
-    if not isinstance(value, dict) or set(value) != {"capability", "arguments", "reason"}:
+    if not isinstance(value, dict) or set(value) != {
+        "capability",
+        "arguments",
+        "reason",
+    }:
         raise ProtocolError(f"adapter proposal {index} has an invalid schema")
-    capability, arguments, reason = value["capability"], value["arguments"], value["reason"]
+    capability, arguments, reason = (
+        value["capability"],
+        value["arguments"],
+        value["reason"],
+    )
     if not isinstance(capability, str) or not capability:
         raise ProtocolError(f"adapter proposal {index} has an invalid capability")
     if not isinstance(arguments, dict):
@@ -53,7 +61,9 @@ def run_adapter(
     """
     if not command or not all(isinstance(part, str) and part for part in command):
         raise ProtocolError("adapter command must contain non-empty strings")
-    request = (json.dumps({"type": "event", "event": event}, ensure_ascii=True) + "\n").encode()
+    request = (
+        json.dumps({"type": "event", "event": event}, ensure_ascii=True) + "\n"
+    ).encode()
     environment = {"PATH": os.environ.get("PATH", ""), "PYTHONIOENCODING": "utf-8"}
     with tempfile.TemporaryDirectory(prefix="firebreak-adapter-") as directory:
         try:
@@ -65,7 +75,11 @@ def run_adapter(
                 cwd=directory,
                 env=environment,
             )
-            assert process.stdin is not None and process.stdout is not None and process.stderr is not None
+            assert (
+                process.stdin is not None
+                and process.stdout is not None
+                and process.stderr is not None
+            )
             process.stdin.write(request)
             process.stdin.close()
             output = bytearray()
@@ -81,8 +95,12 @@ def run_adapter(
                         overflow.set()
 
             readers = [
-                threading.Thread(target=read_bounded, args=(process.stdout, output), daemon=True),
-                threading.Thread(target=read_bounded, args=(process.stderr, errors), daemon=True),
+                threading.Thread(
+                    target=read_bounded, args=(process.stdout, output), daemon=True
+                ),
+                threading.Thread(
+                    target=read_bounded, args=(process.stderr, errors), daemon=True
+                ),
             ]
             for reader in readers:
                 reader.start()

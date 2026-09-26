@@ -37,7 +37,10 @@ def install(raw: bytes, destination: Path = VENDORED) -> None:
 
 def load(path: Path = VENDORED) -> dict[str, Any]:
     raw = path.read_bytes()
-    if path == VENDORED and hashlib.sha256(raw).hexdigest() not in {UPSTREAM_SHA256, PACKAGED_SHA256}:
+    if path == VENDORED and hashlib.sha256(raw).hexdigest() not in {
+        UPSTREAM_SHA256,
+        PACKAGED_SHA256,
+    }:
         raise ProtocolError("vendored upstream corpus does not match its pinned hash")
     value = json.loads(raw.decode("utf-8"))
     if not isinstance(value, dict) or not isinstance(value.get("cases"), list):

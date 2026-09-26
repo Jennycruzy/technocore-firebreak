@@ -12,6 +12,9 @@ license = {text = "MIT"}
 authors = [{name = "Technocore Firebreak contributors"}]
 dependencies = ["cryptography>=43"]
 
+[project.optional-dependencies]
+dev = ["ruff==0.16.9"]
+
 [project.scripts]
 firebreak = "firebreak.cli:main"
 
@@ -20,3 +23,6 @@ include = ["firebreak*"]
 
 [tool.setuptools.package-data]
 firebreak = ["data/*.json"]
+
+[tool.ruff]
+target-version = "py312"

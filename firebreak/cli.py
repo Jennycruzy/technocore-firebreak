@@ -5,36 +5,44 @@ import sys
 from pathlib import Path
 
 from . import __version__
-from .consumer import consume_response
 from .certify import certify, write_certification
+from .consumer import consume_response
 from .corpus import install, verify, write_evidence
 from .errors import FirebreakError
-from .render import terminal_safe_json
-from .pipeline import process_room
 from .isolation import docker_adapter_command
+from .pipeline import process_room
+from .render import terminal_safe_json
 
 
 def parser() -> argparse.ArgumentParser:
     command = argparse.ArgumentParser(prog="firebreak")
     command.add_argument("--version", action="version", version=__version__)
     subcommands = command.add_subparsers(dest="command", required=True)
-    ingest = subcommands.add_parser("ingest", help="ingest an already-fetched room response")
+    ingest = subcommands.add_parser(
+        "ingest", help="ingest an already-fetched room response"
+    )
     ingest.add_argument("room")
     ingest.add_argument("response", type=Path)
     ingest.add_argument("--root", type=Path, default=Path(".firebreak"))
-    corpus = subcommands.add_parser("corpus", help="install or verify the pinned upstream corpus")
+    corpus = subcommands.add_parser(
+        "corpus", help="install or verify the pinned upstream corpus"
+    )
     corpus_commands = corpus.add_subparsers(dest="corpus_command", required=True)
     corpus_install = corpus_commands.add_parser("install")
     corpus_install.add_argument("source", type=Path)
     corpus_verify = corpus_commands.add_parser("verify")
     corpus_verify.add_argument("--source", type=Path)
     corpus_verify.add_argument("--output", type=Path, default=Path("evidence"))
-    certification = subcommands.add_parser("certify", help="certify an adapter against hostile records")
+    certification = subcommands.add_parser(
+        "certify", help="certify an adapter against hostile records"
+    )
     certification.add_argument("--output", type=Path, default=Path("evidence"))
     certification.add_argument("--root", type=Path, default=Path(".firebreak"))
     certification.add_argument("--docker-image")
     certification.add_argument("adapter", nargs=argparse.REMAINDER)
-    run = subcommands.add_parser("run", help="process one room response through the full pipeline")
+    run = subcommands.add_parser(
+        "run", help="process one room response through the full pipeline"
+    )
     run.add_argument("room")
     run.add_argument("--base-url", required=True)
     run.add_argument("--root", type=Path, default=Path(".firebreak"))
@@ -48,15 +56,22 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "run":
             report = process_room(
-                args.base_url, args.room, args.root,
-                command=args.adapter or None, since=args.since,
+                args.base_url,
+                args.room,
+                args.root,
+                command=args.adapter or None,
+                since=args.since,
             )
             print(terminal_safe_json(report))
             return 0 if report["passed"] else 1
         if args.command == "certify":
             if args.docker_image and args.adapter:
                 raise ValueError("choose either --docker-image or an adapter command")
-            command = docker_adapter_command(args.docker_image) if args.docker_image else (args.adapter or None)
+            command = (
+                docker_adapter_command(args.docker_image)
+                if args.docker_image
+                else (args.adapter or None)
+            )
             report = certify(args.root, command=command)
             write_certification(report, args.output)
             print(terminal_safe_json(report))
@@ -70,7 +85,9 @@ def main(argv: list[str] | None = None) -> int:
             write_evidence(report, args.output)
             print(terminal_safe_json(report))
             return 0 if report["passed"] else 1
-        result = consume_response(args.response.read_bytes(), room=args.room, root=args.root)
+        result = consume_response(
+            args.response.read_bytes(), room=args.room, root=args.root
+        )
     except (FirebreakError, OSError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1

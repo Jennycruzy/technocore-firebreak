@@ -3,8 +3,8 @@ from __future__ import annotations
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
 
 from firebreak.adapter import run_adapter, run_evidence
 from firebreak.broker import CapabilityBroker
@@ -18,7 +18,12 @@ class AdapterTests(unittest.TestCase):
     def broker(self, root: Path):
         canaries = {
             name: EffectCanary()
-            for name in ("network.fetch", "process.spawn", "technocore.reply", "secret.read")
+            for name in (
+                "network.fetch",
+                "process.spawn",
+                "technocore.reply",
+                "secret.read",
+            )
         }
         return CapabilityBroker(root, canaries), canaries
 
@@ -45,8 +50,12 @@ class AdapterTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             broker, _ = self.broker(Path(directory))
             for mode in (
-                "malformed", "unknown-field", "many", "fail",
-                "output-overflow", "error-overflow",
+                "malformed",
+                "unknown-field",
+                "many",
+                "fail",
+                "output-overflow",
+                "error-overflow",
             ):
                 with self.subTest(mode=mode), self.assertRaises(ProtocolError):
                     run_adapter([sys.executable, str(FIXTURE), mode], {}, broker)
@@ -66,7 +75,9 @@ class AdapterTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             broker, _ = self.broker(Path(directory))
             with self.assertRaisesRegex(ProtocolError, "time limit"):
-                run_adapter([sys.executable, str(FIXTURE), "timeout"], {}, broker, timeout=0.05)
+                run_adapter(
+                    [sys.executable, str(FIXTURE), "timeout"], {}, broker, timeout=0.05
+                )
 
 
 if __name__ == "__main__":

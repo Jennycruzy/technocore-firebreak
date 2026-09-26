@@ -9,9 +9,15 @@ class IsolationTests(unittest.TestCase):
         command = docker_adapter_command("technocore-firebreak-adapter:test")
         joined = " ".join(command)
         for required in (
-            "--network none", "--read-only", "--cap-drop ALL",
-            "--security-opt no-new-privileges", "--pids-limit 64",
-            "--memory 128m", "--cpus 1", "noexec", "nosuid",
+            "--network none",
+            "--read-only",
+            "--cap-drop ALL",
+            "--security-opt no-new-privileges",
+            "--pids-limit 64",
+            "--memory 128m",
+            "--cpus 1",
+            "noexec",
+            "nosuid",
         ):
             self.assertIn(required, joined)
 

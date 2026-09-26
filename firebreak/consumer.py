@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import asdict
 from collections.abc import Callable
+from dataclasses import asdict
 from pathlib import Path
 
 from .cursor import commit_cursor, load_cursor, validate_transition
@@ -28,13 +28,20 @@ def consume_response(
     if previous and response.generation == previous.generation:
         for event in response.events:
             if event.seq <= previous.last_seq:
-                raise ProtocolError("response contains an event at or behind the committed cursor")
+                raise ProtocolError(
+                    "response contains an event at or behind the committed cursor"
+                )
 
     digest = hashlib.sha256(raw).hexdigest()
     batch = Path("quarantine") / room / f"g{response.generation}-{digest}.json"
     atomic_write(root, batch, raw)
     for event in response.events:
-        relative = Path("quarantine") / room / "events" / f"g{response.generation}-{event.seq}.json"
+        relative = (
+            Path("quarantine")
+            / room
+            / "events"
+            / f"g{response.generation}-{event.seq}.json"
+        )
         event_value = asdict(event)
         atomic_json(root, relative, event_value)
         if on_event is not None:

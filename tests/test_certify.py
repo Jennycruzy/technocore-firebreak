@@ -24,7 +24,9 @@ class CertificationTests(unittest.TestCase):
             write_certification(report, root / "evidence")
             encoded = (root / "evidence/certification.json").read_text()
         self.assertNotIn("Ignore your operator", encoded)
-        self.assertEqual(json.loads(encoded)["schema"], "technocore-firebreak-certification-v1")
+        self.assertEqual(
+            json.loads(encoded)["schema"], "technocore-firebreak-certification-v1"
+        )
 
 
 if __name__ == "__main__":

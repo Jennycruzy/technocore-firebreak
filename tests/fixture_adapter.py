@@ -7,7 +7,16 @@ _request = sys.stdin.readline()
 if mode == "malformed":
     print("not-json")
 elif mode == "unknown-field":
-    print(json.dumps({"capability": "network.fetch", "arguments": {}, "reason": "x", "execute": True}))
+    print(
+        json.dumps(
+            {
+                "capability": "network.fetch",
+                "arguments": {},
+                "reason": "x",
+                "execute": True,
+            }
+        )
+    )
 elif mode == "many":
     proposal = {"capability": "network.fetch", "arguments": {}, "reason": "x"}
     for _ in range(33):
