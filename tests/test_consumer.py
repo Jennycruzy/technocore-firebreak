@@ -78,7 +78,7 @@ class ConsumerTests(unittest.TestCase):
             real_replace = __import__("os").replace
 
             def fail_event(source, destination):
-                if "/events/" in str(destination):
+                if "events" in Path(destination).parts:
                     raise OSError("injected failure")
                 return real_replace(source, destination)
 
