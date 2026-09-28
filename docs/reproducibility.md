@@ -29,7 +29,9 @@ docker build -f docker/adapter.Dockerfile -t technocore-firebreak-adapter:0.1.0 
 firebreak certify --docker-image technocore-firebreak-adapter:0.1.0 --output evidence
 ```
 
-The default CircleCI workflow repeats the portable checks on Linux and Windows, tests the built wheel
-from outside the source tree, and runs container certification with a remote Docker environment. An
-opt-in `verify_macos` workflow runs the same checks when `run_macos` is true and the CircleCI plan has
-macOS capacity. Each certification job retains its evidence directory as an artifact.
+The default CircleCI workflow is the required verification path: it repeats the portable checks on
+Linux and Windows, tests the built wheel from outside the source tree, and runs container certification
+with a remote Docker environment. An opt-in `verify_macos` workflow runs the same checks when `run_macos`
+is true and the CircleCI plan has macOS capacity. Each certification job retains its evidence directory
+as an artifact. A GitHub Actions copy is retained for manual diagnostics only; it is not triggered by
+pushes or pull requests because hosted-runner availability is not guaranteed for this fork.

@@ -1,8 +1,10 @@
 name: test
 
+# CircleCI is the required cross-platform workflow for this repository. Keep this
+# workflow available for an explicit diagnostic run, but do not report failures on
+# every push when GitHub-hosted runners are unavailable to the fork.
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
