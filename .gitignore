@@ -8,3 +8,5 @@ build/
 dist/
 evidence/
 .firebreak/
+# Local Ed25519 identity seeds must never enter version control.
+*.key
