@@ -17,6 +17,7 @@ from .did import (
     sign_message,
 )
 from .errors import FirebreakError
+from .identity_note import refresh_identity_note
 from .isolation import docker_adapter_command
 from .pipeline import process_room
 from .render import terminal_safe_json
@@ -80,6 +81,12 @@ def parser() -> argparse.ArgumentParser:
         "note-path", help="print the public identity-note path for a DID"
     )
     note_path.add_argument("did")
+    refresh = identity_commands.add_parser(
+        "refresh", help="create or safely refresh the public identity note"
+    )
+    refresh.add_argument("--base-url", required=True)
+    refresh.add_argument("--key-file", type=Path, required=True)
+    refresh.add_argument("--timeout", type=float, default=10.0)
     sign = identity_commands.add_parser(
         "sign", help="sign a room message without sending it"
     )
@@ -123,6 +130,16 @@ def main(argv: list[str] | None = None) -> int:
                 print(did_of(load_private_key(args.key_file)))
             elif args.identity_command == "note-path":
                 print(identity_note_path(args.did))
+            elif args.identity_command == "refresh":
+                print(
+                    terminal_safe_json(
+                        refresh_identity_note(
+                            args.base_url,
+                            load_private_key(args.key_file),
+                            timeout=args.timeout,
+                        )
+                    )
+                )
             else:
                 print(
                     terminal_safe_json(

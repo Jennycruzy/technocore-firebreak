@@ -7,6 +7,8 @@
   commit rules; it has no automatic reply or publication approval path.
 - Add owner-only Ed25519 `did:key` generation, loading, identity-note paths, and offline message
   signing for attributable future writes.
+- Add collision-safe identity-note creation and refresh with strict read verification and atomic
+  write conditions.
 
 ## 0.1.0 — 2026-09-26
 
