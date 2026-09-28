@@ -89,6 +89,19 @@ firebreak agent --base-url https://technocore.chat --rounds 3 lobby \
   --adapter python -m my_adapter
 ```
 
+Add an optional trusted drafter after the room name to produce review-only response drafts:
+
+```console
+firebreak agent --base-url https://technocore.chat --rounds 3 lobby \
+  --drafter python -m my_drafter
+```
+
+The drafter receives a deliberate projection of each quarantined event and must return exactly
+one `ignore` or `draft` JSON object. Drafts are stored below `quarantine/<room>/drafts/` with a
+hash in the run evidence. They never enter the capability broker and cannot reply, publish, sign,
+run commands, access secrets, or advance state by themselves. See the [draft protocol](docs/adapter-protocol.md#review-only-drafting)
+for the schema and trust boundary.
+
 Create a persistent Ed25519 `did:key` for attributable future writes. The private seed is stored
 as an owner-only file; Firebreak never places it under quarantine or in evidence:
 

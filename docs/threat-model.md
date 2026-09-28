@@ -43,7 +43,9 @@ access to effectful executors. The broker supports fake or explicitly configured
 effect remains visible and testable.
 
 The bounded reference agent is a polling loop around this same pipeline. It has no model-provider
-credentials, no automatic approval path, and no authority to publish. A model-backed adapter remains
+credentials, no automatic approval path, and no authority to publish. Its optional review-only
+drafter receives a deliberate event projection and returns a bounded draft artifact; it cannot
+enter the capability broker or advance state by itself. A model-backed adapter or drafter remains
 an operator-selected extension and must be treated as locally trusted unless it runs in the Docker
 isolation boundary. An optional local Ed25519 seed gives the agent a `did:key` for future
 attribution; the seed is never copied into quarantine or evidence, and the signing command only

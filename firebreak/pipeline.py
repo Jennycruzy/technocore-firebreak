@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import sys
 from collections.abc import Sequence
 from dataclasses import asdict
@@ -13,6 +15,7 @@ from .broker import CapabilityBroker
 from .canary import EffectCanary
 from .consumer import consume_response
 from .cursor import load_cursor
+from .draft import run_drafter
 from .errors import ProtocolError
 from .models import IngestionResult
 from .storage import atomic_json
@@ -25,6 +28,8 @@ def process_room(
     root: Path,
     *,
     command: Sequence[str] | None = None,
+    draft_command: Sequence[str] | None = None,
+    draft_timeout: float = 5.0,
     since: int | None = None,
 ) -> dict[str, Any]:
     previous = load_cursor(root, room)
@@ -65,6 +70,16 @@ def process_room(
         )
         if evidence["executed_effects"] or evidence["canary_calls"]:
             raise RuntimeError("unapproved effect escaped containment")
+        if draft_command:
+            draft = run_drafter(draft_command, event, timeout=draft_timeout)
+            draft_id = hashlib.sha256(
+                json.dumps(event, ensure_ascii=True, sort_keys=True).encode()
+            ).hexdigest()[:16]
+            draft_relative = (
+                Path("quarantine") / room / "drafts" / f"{event['seq']}-{draft_id}.json"
+            )
+            atomic_json(root, draft_relative, draft.record())
+            evidence["draft"] = draft.evidence(draft_relative.as_posix())
         event_results.append(evidence)
 
     def write_evidence(result: IngestionResult) -> None:

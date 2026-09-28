@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — 2026-09-28
+
+- Add a bounded review-only drafter protocol for producing response drafts from quarantined
+  event projections.
+- Keep draft text in quarantine with hashes in evidence; no draft can invoke a capability,
+  publish, sign, or advance a cursor.
+- Reject malformed, duplicated, unknown, oversized, timed-out, and non-canonical drafter output.
+- Expand the regression suite to 70 tests.
+
 ## 0.2.0 — 2026-09-28
 
 - Add a read-only identity-note status check with mismatch and malformed-content classification.

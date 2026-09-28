@@ -71,6 +71,38 @@ class AgentTests(unittest.TestCase):
             process.call_args.kwargs["command"], ("trusted-adapter", "--safe")
         )
 
+    def test_custom_drafter_is_passed_without_publish_options(self):
+        with patch(
+            "firebreak.agent.process_room", return_value={"passed": True}
+        ) as process:
+            run_agent(
+                AgentConfig(
+                    "https://technocore.example",
+                    "lobby",
+                    Path(".firebreak"),
+                    draft_command=("trusted-drafter", "--safe"),
+                )
+            )
+        self.assertEqual(
+            process.call_args.kwargs["draft_command"],
+            ("trusted-drafter", "--safe"),
+        )
+
+    def test_cli_accepts_a_drafter_after_the_room(self):
+        args = parser().parse_args(
+            [
+                "agent",
+                "--base-url",
+                "https://technocore.example",
+                "lobby",
+                "--drafter",
+                "python",
+                "-m",
+                "my_drafter",
+            ]
+        )
+        self.assertEqual(args.drafter, ["python", "-m", "my_drafter"])
+
     def test_agent_limits_are_fail_closed(self):
         with self.assertRaises(ProtocolError):
             AgentConfig("https://technocore.example", "lobby", Path("."), rounds=0)

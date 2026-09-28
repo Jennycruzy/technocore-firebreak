@@ -112,7 +112,7 @@ jobs:
           name: Verify installed wheel outside the checkout
           command: |
             python -m venv /tmp/firebreak-wheel-test
-            /tmp/firebreak-wheel-test/bin/python -m pip install dist/technocore_firebreak-0.2.0-py3-none-any.whl
+            /tmp/firebreak-wheel-test/bin/python -m pip install dist/technocore_firebreak-0.3.0-py3-none-any.whl
             cd /tmp
             /tmp/firebreak-wheel-test/bin/firebreak-agent --help
             /tmp/firebreak-wheel-test/bin/firebreak corpus verify --output evidence

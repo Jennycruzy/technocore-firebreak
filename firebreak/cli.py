@@ -66,7 +66,9 @@ def parser() -> argparse.ArgumentParser:
     agent.add_argument("--interval", type=float, default=1.0)
     agent.add_argument("--identity-key", type=Path)
     agent.add_argument("room")
-    agent.add_argument("--adapter", nargs=argparse.REMAINDER, default=[])
+    agent_modes = agent.add_mutually_exclusive_group()
+    agent_modes.add_argument("--adapter", nargs=argparse.REMAINDER, default=[])
+    agent_modes.add_argument("--drafter", nargs=argparse.REMAINDER, default=[])
     identity = subcommands.add_parser(
         "identity", help="create and use a local Ed25519 did:key identity"
     )
@@ -124,6 +126,7 @@ def main(argv: list[str] | None = None) -> int:
                 rounds=args.rounds,
                 interval=args.interval,
                 adapter=args.adapter,
+                drafter=args.drafter,
                 identity_key=args.identity_key,
             )
             for report in reports:
