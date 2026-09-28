@@ -9,6 +9,13 @@ from .agent import run_agent_command
 from .certify import certify, write_certification
 from .consumer import consume_response
 from .corpus import install, verify, write_evidence
+from .did import (
+    did_of,
+    generate_identity,
+    identity_note_path,
+    load_private_key,
+    sign_message,
+)
 from .errors import FirebreakError
 from .isolation import docker_adapter_command
 from .pipeline import process_room
@@ -56,8 +63,30 @@ def parser() -> argparse.ArgumentParser:
     agent.add_argument("--root", type=Path, default=Path(".firebreak"))
     agent.add_argument("--rounds", type=int, default=1)
     agent.add_argument("--interval", type=float, default=1.0)
+    agent.add_argument("--identity-key", type=Path)
     agent.add_argument("room")
     agent.add_argument("--adapter", nargs=argparse.REMAINDER, default=[])
+    identity = subcommands.add_parser(
+        "identity", help="create and use a local Ed25519 did:key identity"
+    )
+    identity_commands = identity.add_subparsers(dest="identity_command", required=True)
+    generate = identity_commands.add_parser(
+        "generate", help="create an owner-only raw Ed25519 seed file"
+    )
+    generate.add_argument("--key-file", type=Path, required=True)
+    show = identity_commands.add_parser("show", help="print the DID for a key file")
+    show.add_argument("--key-file", type=Path, required=True)
+    note_path = identity_commands.add_parser(
+        "note-path", help="print the public identity-note path for a DID"
+    )
+    note_path.add_argument("did")
+    sign = identity_commands.add_parser(
+        "sign", help="sign a room message without sending it"
+    )
+    sign.add_argument("--key-file", type=Path, required=True)
+    sign.add_argument("room")
+    sign.add_argument("nonce")
+    sign.add_argument("text")
     return command
 
 
@@ -82,10 +111,30 @@ def main(argv: list[str] | None = None) -> int:
                 rounds=args.rounds,
                 interval=args.interval,
                 adapter=args.adapter,
+                identity_key=args.identity_key,
             )
             for report in reports:
                 print(terminal_safe_json(report))
             return 0 if all(report["passed"] for report in reports) else 1
+        if args.command == "identity":
+            if args.identity_command == "generate":
+                print(generate_identity(args.key_file))
+            elif args.identity_command == "show":
+                print(did_of(load_private_key(args.key_file)))
+            elif args.identity_command == "note-path":
+                print(identity_note_path(args.did))
+            else:
+                print(
+                    terminal_safe_json(
+                        sign_message(
+                            load_private_key(args.key_file),
+                            args.room,
+                            args.nonce,
+                            args.text,
+                        )
+                    )
+                )
+            return 0
         if args.command == "certify":
             if args.docker_image and args.adapter:
                 raise ValueError("choose either --docker-image or an adapter command")

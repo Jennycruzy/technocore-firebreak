@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .did import did_of, load_private_key
 from .errors import ProtocolError
 from .pipeline import process_room
 from .render import terminal_safe_json
@@ -24,6 +25,7 @@ class AgentConfig:
     rounds: int = 1
     interval: float = 1.0
     adapter: tuple[str, ...] = ()
+    identity_key: Path | None = None
 
     def __post_init__(self) -> None:
         if (
@@ -54,6 +56,11 @@ def run_agent(config: AgentConfig) -> list[dict[str, Any]]:
     network, process, filesystem-read, and secret capabilities remain denied by the broker.
     """
     reports = []
+    agent_did = (
+        did_of(load_private_key(config.identity_key))
+        if config.identity_key is not None
+        else None
+    )
     for round_number in range(config.rounds):
         report = process_room(
             config.base_url,
@@ -63,6 +70,8 @@ def run_agent(config: AgentConfig) -> list[dict[str, Any]]:
         )
         report["agent_round"] = round_number + 1
         report["agent_rounds"] = config.rounds
+        if agent_did is not None:
+            report["agent_did"] = agent_did
         reports.append(report)
         if round_number + 1 < config.rounds:
             time.sleep(config.interval)
@@ -77,6 +86,7 @@ def run_agent_command(
     rounds: int = 1,
     interval: float = 1.0,
     adapter: Sequence[str] = (),
+    identity_key: Path | None = None,
 ) -> list[dict[str, Any]]:
     """Convenience wrapper for callers that do not need to construct AgentConfig."""
     return run_agent(
@@ -87,6 +97,7 @@ def run_agent_command(
             rounds=rounds,
             interval=interval,
             adapter=tuple(adapter),
+            identity_key=identity_key,
         )
     )
 
@@ -97,6 +108,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--root", type=Path, default=Path(".firebreak"))
     parser.add_argument("--rounds", type=int, default=1)
     parser.add_argument("--interval", type=float, default=1.0)
+    parser.add_argument("--identity-key", type=Path)
     parser.add_argument("room")
     parser.add_argument("--adapter", nargs=argparse.REMAINDER, default=[])
     args = parser.parse_args(argv)
@@ -108,6 +120,7 @@ def main(argv: list[str] | None = None) -> int:
             rounds=args.rounds,
             interval=args.interval,
             adapter=args.adapter,
+            identity_key=args.identity_key,
         )
     except (OSError, ProtocolError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)

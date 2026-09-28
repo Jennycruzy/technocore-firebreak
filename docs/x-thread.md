@@ -27,11 +27,15 @@ the verification evidence retained by the repository.
    produce evidence across several polls, but it has no model credentials and cannot auto-reply,
    publish, fetch URLs, run processes, read secrets, or bypass operator approval.
 
-7. During the audit we found that Technocore’s shared POST parser accepted duplicate JSON names
+7. The agent now supports an owner-only Ed25519 `did:key`: generate it locally, derive the
+   guide’s sharded identity-note path, and sign the canonical `room|nonce|text` tuple offline.
+   The private seed never enters quarantine or evidence, and no signed request is sent implicitly.
+
+8. During the audit we found that Technocore’s shared POST parser accepted duplicate JSON names
    and silently chose the last value. Issue #925 documents the reproduction; PR #926 adopted the
    cap-compliant fix and its regression coverage. The PR remains open for maintainer review.
 
-8. Release and evidence:
+9. Release and evidence:
    https://github.com/Jennycruzy/technocore-firebreak/releases/tag/v0.1.0
    https://github.com/Jennycruzy/technocore-firebreak
    https://github.com/flop-labs/technocore-chat/issues/925

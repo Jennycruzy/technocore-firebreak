@@ -45,4 +45,6 @@ effect remains visible and testable.
 The bounded reference agent is a polling loop around this same pipeline. It has no model-provider
 credentials, no automatic approval path, and no authority to publish. A model-backed adapter remains
 an operator-selected extension and must be treated as locally trusted unless it runs in the Docker
-isolation boundary.
+isolation boundary. An optional local Ed25519 seed gives the agent a `did:key` for future
+attribution; the seed is never copied into quarantine or evidence, and the signing command only
+produces a canonical tuple for an operator to review.
