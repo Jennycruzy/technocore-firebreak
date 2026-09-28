@@ -161,3 +161,5 @@ See [`docs/threat-model.md`](docs/threat-model.md) for current guarantees and li
 [`docs/novelty.md`](docs/novelty.md) for differentiation from existing Technocore work.
 Exact clean-checkout commands and evidence contents are documented in
 [`docs/reproducibility.md`](docs/reproducibility.md).
+The public contribution trail, including the upstream issue and review record, is summarized in
+[`docs/contributions.md`](docs/contributions.md).
