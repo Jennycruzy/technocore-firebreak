@@ -20,7 +20,9 @@ from .errors import FirebreakError
 from .identity_note import identity_note_status, refresh_identity_note
 from .isolation import docker_adapter_command
 from .pipeline import process_room
+from .publish import publish_signed_message
 from .render import terminal_safe_json
+from .review import approve_review, preview_review
 
 
 def parser() -> argparse.ArgumentParser:
@@ -69,6 +71,33 @@ def parser() -> argparse.ArgumentParser:
     agent_modes = agent.add_mutually_exclusive_group()
     agent_modes.add_argument("--adapter", nargs=argparse.REMAINDER, default=[])
     agent_modes.add_argument("--drafter", nargs=argparse.REMAINDER, default=[])
+    publish = subcommands.add_parser(
+        "publish", help="preview and explicitly approve one signed room message"
+    )
+    publish.add_argument("--base-url", required=True)
+    publish.add_argument("--key-file", type=Path, required=True)
+    publish.add_argument("--room", required=True)
+    publish.add_argument("--nonce", required=True)
+    publish.add_argument("--text", required=True)
+    publish.add_argument(
+        "--confirm", action="store_true", help="authorize the network write"
+    )
+    publish.add_argument("--timeout", type=float, default=10.0)
+    review = subcommands.add_parser(
+        "review", help="preview or publish one quarantined response draft"
+    )
+    review.add_argument("--draft", type=Path, required=True)
+    review.add_argument("--base-url", required=True)
+    review.add_argument("--key-file", type=Path, required=True)
+    review.add_argument("--room", required=True)
+    review.add_argument("--nonce", required=True)
+    review.add_argument("--root", type=Path, default=Path(".firebreak"))
+    review.add_argument(
+        "--confirm",
+        action="store_true",
+        help="authorize publication of the reviewed draft",
+    )
+    review.add_argument("--timeout", type=float, default=10.0)
     identity = subcommands.add_parser(
         "identity", help="create and use a local Ed25519 did:key identity"
     )
@@ -132,6 +161,50 @@ def main(argv: list[str] | None = None) -> int:
             for report in reports:
                 print(terminal_safe_json(report))
             return 0 if all(report["passed"] for report in reports) else 1
+        if args.command == "publish":
+            key = load_private_key(args.key_file)
+            signed = sign_message(key, args.room, args.nonce, args.text)
+            if not args.confirm:
+                print(terminal_safe_json({**signed, "published": False}))
+                print(
+                    "publication not sent; rerun with --confirm after reviewing the preview",
+                    file=sys.stderr,
+                )
+                return 2
+            result = publish_signed_message(
+                args.base_url,
+                key,
+                args.room,
+                args.nonce,
+                args.text,
+                approved=True,
+                timeout=args.timeout,
+            )
+            print(terminal_safe_json({**result, "published": True}))
+            return 0
+        if args.command == "review":
+            key = load_private_key(args.key_file)
+            if not args.confirm:
+                preview = preview_review(
+                    args.draft, key, args.room, args.nonce, args.root
+                )
+                print(terminal_safe_json(preview))
+                print(
+                    "publication not sent; rerun with --confirm after reviewing the draft",
+                    file=sys.stderr,
+                )
+                return 2
+            result = approve_review(
+                args.draft,
+                key,
+                args.room,
+                args.nonce,
+                args.base_url,
+                args.root,
+                timeout=args.timeout,
+            )
+            print(terminal_safe_json(result))
+            return 0 if result["verification"]["verified"] else 1
         if args.command == "identity":
             if args.identity_command == "generate":
                 print(generate_identity(args.key_file))

@@ -42,6 +42,24 @@ written to quarantine and only its action, reason, length, hash, and quarantine 
 evidence. It is never sent, signed, or converted into a capability proposal. A human or separate
 operator workflow must review it before any publication decision.
 
+If an operator decides to publish a draft, use the review bridge rather than piping drafter output
+into publication:
+
+```console
+firebreak review --draft .firebreak/quarantine/lobby/drafts/4-<event-hash>.json \
+  --base-url https://technocore.chat \
+  --key-file ~/.config/technocore-firebreak/identity.key \
+  --room lobby --nonce 1234567890123 --root .firebreak
+```
+
+The first invocation is read-only and binds the draft to the exact quarantined source-event hash.
+After reviewing the escaped preview, repeat it with `--confirm`. Only then does Firebreak send the
+signed GET, read back the bounded room view, verify the exact record, and write a local approval
+receipt. A receipt records `published_verified` or `published_unverified`; the latter is an
+explicit failure to confirm and the command exits non-zero. Do not pipe drafter output into
+publication. For text that was authored outside quarantine, `firebreak publish` provides the same
+preview-then-confirm signing boundary without a draft/source receipt.
+
 The portable subprocess runner removes ambient environment variables, but it is not an operating
 system sandbox. Use only a locally trusted drafter or place the provider wrapper in the locked-down
 container path described below. The provider wrapper must receive any model credentials explicitly;

@@ -17,7 +17,9 @@ from .consumer import consume_response
 from .cursor import load_cursor
 from .draft import run_drafter
 from .errors import ProtocolError
+from .integrity import event_digest
 from .models import IngestionResult
+from .schema import parse_room_response
 from .storage import atomic_json
 from .transport import fetch_room
 
@@ -42,6 +44,7 @@ def process_room(
             raise ProtocolError("since must match the committed cursor")
         effective_since = previous.last_seq
     raw = fetch_room(base_url, room, since=effective_since)
+    fetched_response = parse_room_response(raw, expected_room=room)
     adapter_command = list(
         command or [sys.executable, "-m", "firebreak.reference_adapter"]
     )
@@ -78,8 +81,31 @@ def process_room(
             draft_relative = (
                 Path("quarantine") / room / "drafts" / f"{event['seq']}-{draft_id}.json"
             )
-            atomic_json(root, draft_relative, draft.record())
-            evidence["draft"] = draft.evidence(draft_relative.as_posix())
+            draft_record = draft.record()
+            source_event_path = (
+                Path("quarantine")
+                / room
+                / "events"
+                / f"g{fetched_response.generation}-{event['seq']}.json"
+            )
+            source_event_hash = event_digest(event)
+            draft_record.update(
+                {
+                    "room": room,
+                    "event_seq": event["seq"],
+                    "source_event_path": source_event_path.as_posix(),
+                    "source_event_sha256": source_event_hash,
+                }
+            )
+            atomic_json(root, draft_relative, draft_record)
+            draft_evidence = draft.evidence(draft_relative.as_posix())
+            draft_evidence.update(
+                {
+                    "source_event_path": source_event_path.as_posix(),
+                    "source_event_sha256": source_event_hash,
+                }
+            )
+            evidence["draft"] = draft_evidence
         event_results.append(evidence)
 
     def write_evidence(result: IngestionResult) -> None:

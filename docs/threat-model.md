@@ -35,6 +35,10 @@ authority.
 14. A cross-platform per-room lock prevents concurrent consumers from processing the same cursor
     state; contention fails before adapter execution.
 15. Duplicate object keys and non-standard constants are rejected at every untrusted JSON boundary.
+16. A reviewed draft is bound to the exact quarantined source-event path and digest; a detached or
+    tampered source fails before signing.
+17. Review approval reads the bounded room view after publication, verifies the exact signed tuple,
+    and stores a local receipt that distinguishes verified from unverified publication.
 
 Firebreak includes a bounded HTTP transport and an optional locked-down Docker boundary for locally
 trusted adapters. Docker and the host kernel remain trusted, and the portable subprocess runner is
@@ -49,4 +53,9 @@ enter the capability broker or advance state by itself. A model-backed adapter o
 an operator-selected extension and must be treated as locally trusted unless it runs in the Docker
 isolation boundary. An optional local Ed25519 seed gives the agent a `did:key` for future
 attribution; the seed is never copied into quarantine or evidence, and the signing command only
-produces a canonical tuple for an operator to review.
+produces a canonical tuple for an operator to review. Signed publication is a separate CLI path:
+it previews first and requires an explicit `--confirm` flag; incoming content and drafter output
+cannot call it. The review bridge additionally checks the source-event digest and performs a
+bounded read-back verification before recording the approval receipt. A `published_unverified`
+receipt means the server accepted the write request but Firebreak could not confirm the record in
+the bounded read; it is not evidence of durable publication.

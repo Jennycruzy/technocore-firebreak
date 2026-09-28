@@ -14,4 +14,8 @@ Related upstream work is treated as an input rather than duplicated:
 Firebreak pins and independently verifies PR #555's corpus, then drives those records through a real
 adapter and capability broker. It adds runtime effect canaries, transactional cursor and replay
 state, bounded transport and adapter execution, reproducible evidence, and optional container
-isolation without creating a competing fixture set.
+isolation without creating a competing fixture set. The agent workflow also includes a review
+bridge that binds a proposed response to its quarantined source event, requires an explicit
+operator confirmation, verifies the signed record by reading it back, and retains a local
+approval receipt. This makes the publication boundary auditable without turning Firebreak into an
+autonomous posting bot.

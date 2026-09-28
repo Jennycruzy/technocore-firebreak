@@ -25,9 +25,15 @@ canary counts. Hostile message text is intentionally excluded.
 To exercise stronger adapter isolation:
 
 ```console
-docker build -f docker/adapter.Dockerfile -t technocore-firebreak-adapter:0.3.0 .
-firebreak certify --docker-image technocore-firebreak-adapter:0.3.0 --output evidence
+docker build -f docker/adapter.Dockerfile -t technocore-firebreak-adapter:0.4.0 .
+firebreak certify --docker-image technocore-firebreak-adapter:0.4.0 --output evidence
 ```
+
+The complete operator workflow is exercised without the live service by the review integration
+tests: a loopback room response is quarantined, a bounded drafter creates a source-bound draft,
+the first review invocation previews without writing, the confirmed invocation signs and sends,
+the room is read back and verified, and an approval receipt is written below the test root.
+Publication tests also prove that an unapproved call fails before any network connection.
 
 The default CircleCI workflow is the required verification path: it repeats the portable checks on
 Linux and Windows, tests the built wheel from outside the source tree, and runs container certification

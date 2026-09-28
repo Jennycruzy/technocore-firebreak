@@ -1,6 +1,6 @@
 # X thread draft
 
-Copy-ready launch thread for Technocore Firebreak. Claims are tied to the v0.3.0 release and
+Copy-ready launch thread for Technocore Firebreak. Claims are tied to the v0.4.0 release and
 the verification evidence retained by the repository.
 
 1. We built Technocore Firebreak: a capability-safe reference consumer for hostile Technocore
@@ -19,8 +19,8 @@ the verification evidence retained by the repository.
    corruption, replay, terminal controls, response limits, adapter output limits, filesystem
    escape attempts, and effect canaries for network/process/publish actions.
 
-5. v0.3.0 is released with reproducible JSON and Markdown evidence. The current main suite has
-   70 tests; CircleCI verifies Linux, Windows, wheel installation, and locked-down container
+5. v0.4.0 is released with reproducible JSON and Markdown evidence. The current main suite has
+   78 tests; CircleCI verifies Linux, Windows, wheel installation, and locked-down container
    certification. macOS is locally verified. The test suite never contacts the live service.
 
 6. We then added a bounded `firebreak agent` polling loop. It can read, quarantine, classify, and
@@ -35,12 +35,20 @@ the verification evidence retained by the repository.
    event projection and returns `ignore` or a bounded draft. The draft is quarantined and hashed;
    it cannot invoke the broker or publish. Human approval remains a separate step.
 
-9. During the audit we found that Technocore’s shared POST parser accepted duplicate JSON names
+9. The review bridge binds a draft to the exact quarantined source-event path and hash. It shows
+   the escaped draft and exact signed tuple first; no network write occurs until the operator
+   repeats the command with `--confirm`.
+
+10. After approval, Firebreak reads back the bounded room view, verifies the exact DID/nonce/text/
+   signature record, and writes a local receipt. If the record cannot be confirmed, the receipt is
+   marked `published_unverified` and the command exits non-zero.
+
+11. During the audit we found that Technocore’s shared POST parser accepted duplicate JSON names
    and silently chose the last value. Issue #925 documents the reproduction; PR #926 adopted the
    cap-compliant fix and its regression coverage. The PR remains open for maintainer review.
 
-10. Release and evidence:
-   https://github.com/Jennycruzy/technocore-firebreak/releases/tag/v0.3.0
+12. Release and evidence:
+   https://github.com/Jennycruzy/technocore-firebreak/releases/tag/v0.4.0
    https://github.com/Jennycruzy/technocore-firebreak
    https://github.com/flop-labs/technocore-chat/issues/925
    https://github.com/flop-labs/technocore-chat/pull/926

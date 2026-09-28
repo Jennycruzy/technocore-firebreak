@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0 — 2026-09-28
+
+- Add preview-first, explicitly approved signed publication for operator-authored messages.
+- Reject unapproved publication before network access and verify canonical signed paths in tests.
+- Add a source-bound review bridge for quarantined drafts, with tamper detection and exact source
+  hashes in run evidence.
+- Read back and verify the signed record after an approved review, then retain a local approval
+  receipt that distinguishes verified from unverified publication.
+- Keep incoming content and drafter output unable to invoke publication.
+- Expand the regression suite to 78 tests.
+
 ## 0.3.0 — 2026-09-28
 
 - Add a bounded review-only drafter protocol for producing response drafts from quarantined
