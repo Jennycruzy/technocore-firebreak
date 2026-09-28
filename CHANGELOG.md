@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Add a bounded `firebreak agent` polling loop and `firebreak-agent` entry point.
+- Keep the reference agent behind the same quarantine, capability broker, evidence, and cursor
+  commit rules; it has no automatic reply or publication approval path.
+
 ## 0.1.0 — 2026-09-26
 
 - Validate bounded Technocore room responses before writing local state.

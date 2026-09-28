@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
+from .agent import run_agent_command
 from .certify import certify, write_certification
 from .consumer import consume_response
 from .corpus import install, verify, write_evidence
@@ -48,6 +49,15 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--root", type=Path, default=Path(".firebreak"))
     run.add_argument("--since", type=int)
     run.add_argument("adapter", nargs=argparse.REMAINDER)
+    agent = subcommands.add_parser(
+        "agent", help="poll a room through the bounded Firebreak reference agent"
+    )
+    agent.add_argument("--base-url", required=True)
+    agent.add_argument("--root", type=Path, default=Path(".firebreak"))
+    agent.add_argument("--rounds", type=int, default=1)
+    agent.add_argument("--interval", type=float, default=1.0)
+    agent.add_argument("room")
+    agent.add_argument("--adapter", nargs=argparse.REMAINDER, default=[])
     return command
 
 
@@ -64,6 +74,18 @@ def main(argv: list[str] | None = None) -> int:
             )
             print(terminal_safe_json(report))
             return 0 if report["passed"] else 1
+        if args.command == "agent":
+            reports = run_agent_command(
+                args.base_url,
+                args.room,
+                args.root,
+                rounds=args.rounds,
+                interval=args.interval,
+                adapter=args.adapter,
+            )
+            for report in reports:
+                print(terminal_safe_json(report))
+            return 0 if all(report["passed"] for report in reports) else 1
         if args.command == "certify":
             if args.docker_image and args.adapter:
                 raise ValueError("choose either --docker-image or an adapter command")

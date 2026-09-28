@@ -41,3 +41,8 @@ trusted adapters. Docker and the host kernel remain trusted, and the portable su
 not an OS sandbox. Firebreak does not include model-provider integration or grant an adapter direct
 access to effectful executors. The broker supports fake or explicitly configured executors so every
 effect remains visible and testable.
+
+The bounded reference agent is a polling loop around this same pipeline. It has no model-provider
+credentials, no automatic approval path, and no authority to publish. A model-backed adapter remains
+an operator-selected extension and must be treated as locally trusted unless it runs in the Docker
+isolation boundary.

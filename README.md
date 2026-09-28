@@ -74,6 +74,21 @@ firebreak run safety --base-url http://127.0.0.1:8080 --root .firebreak
 
 The cursor is committed only after every event has been quarantined and processed successfully.
 
+Run the bounded reference agent over several polls:
+
+```console
+firebreak agent --base-url https://technocore.chat --rounds 3 --interval 10 lobby
+```
+
+The agent is deliberately not an autonomous publisher. It uses the same pipeline and broker,
+returns safe evidence, and leaves replies and signed publication behind explicit operator approval.
+Pass a locally trusted adapter after `--` when a different decision process is needed:
+
+```console
+firebreak agent --base-url https://technocore.chat --rounds 3 lobby \
+  --adapter python -m my_adapter
+```
+
 For stronger Linux isolation, run adapter certification through the included non-root container with
 networking disabled, a read-only filesystem, dropped capabilities, and bounded resources. See the
 [adapter protocol](docs/adapter-protocol.md#container-isolation) for the exact command and trust

@@ -17,6 +17,7 @@ dev = ["ruff==0.16.9"]
 
 [project.scripts]
 firebreak = "firebreak.cli:main"
+firebreak-agent = "firebreak.agent:main"
 
 [tool.setuptools.packages.find]
 include = ["firebreak*"]
