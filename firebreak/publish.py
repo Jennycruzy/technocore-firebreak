@@ -11,10 +11,8 @@ from urllib.parse import quote, urlsplit
 import certifi
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from .did import did_of, sign_message, verify_record
+from .did import sign_message
 from .errors import ProtocolError
-from .schema import parse_room_response
-from .transport import fetch_room
 
 MAX_PUBLISH_RESPONSE = 64 * 1024
 
@@ -119,51 +117,4 @@ def publish_signed_message(
         "signature": signed["signature"],
         "response_bytes": len(body),
         "response_sha256": hashlib.sha256(body).hexdigest(),
-    }
-
-
-def verify_signed_publication(
-    base_url: str,
-    key: Ed25519PrivateKey,
-    room: str,
-    nonce: str,
-    text: str,
-    signature: str,
-    *,
-    timeout: float = 10.0,
-) -> dict[str, object]:
-    """Read the bounded room view and verify that the signed record is present."""
-    signed = sign_message(key, room, nonce, text)
-    if signature != signed["signature"]:
-        raise ProtocolError("publication signature does not match the signed message")
-    raw = fetch_room(base_url, room, limit=200, timeout=timeout)
-    response = parse_room_response(raw, expected_room=room)
-    observed_seq: int | None = None
-    for event in response.events:
-        if (
-            event.sender == signed["did"]
-            and event.nonce == int(nonce)
-            and event.text == signed["text"]
-            and event.signature == signature
-            and verify_record(
-                room,
-                {
-                    "from": event.sender,
-                    "nonce": event.nonce,
-                    "text": event.text,
-                    "sig": event.signature,
-                },
-            )
-        ):
-            observed_seq = event.seq
-    return {
-        "verified": observed_seq is not None,
-        "room": room,
-        "did": did_of(key),
-        "nonce": nonce,
-        "text_sha256": hashlib.sha256(signed["text"].encode("utf-8")).hexdigest(),
-        "signature": signature,
-        "observed_seq": observed_seq,
-        "generation": response.generation,
-        "room_response_sha256": hashlib.sha256(raw).hexdigest(),
     }

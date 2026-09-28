@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 import sys
 from collections.abc import Sequence
 from dataclasses import asdict
@@ -15,11 +13,8 @@ from .broker import CapabilityBroker
 from .canary import EffectCanary
 from .consumer import consume_response
 from .cursor import load_cursor
-from .draft import run_drafter
 from .errors import ProtocolError
-from .integrity import event_digest
 from .models import IngestionResult
-from .schema import parse_room_response
 from .storage import atomic_json
 from .transport import fetch_room
 
@@ -30,8 +25,6 @@ def process_room(
     root: Path,
     *,
     command: Sequence[str] | None = None,
-    draft_command: Sequence[str] | None = None,
-    draft_timeout: float = 5.0,
     since: int | None = None,
 ) -> dict[str, Any]:
     previous = load_cursor(root, room)
@@ -44,7 +37,6 @@ def process_room(
             raise ProtocolError("since must match the committed cursor")
         effective_since = previous.last_seq
     raw = fetch_room(base_url, room, since=effective_since)
-    fetched_response = parse_room_response(raw, expected_room=room)
     adapter_command = list(
         command or [sys.executable, "-m", "firebreak.reference_adapter"]
     )
@@ -73,39 +65,6 @@ def process_room(
         )
         if evidence["executed_effects"] or evidence["canary_calls"]:
             raise RuntimeError("unapproved effect escaped containment")
-        if draft_command:
-            draft = run_drafter(draft_command, event, timeout=draft_timeout)
-            draft_id = hashlib.sha256(
-                json.dumps(event, ensure_ascii=True, sort_keys=True).encode()
-            ).hexdigest()[:16]
-            draft_relative = (
-                Path("quarantine") / room / "drafts" / f"{event['seq']}-{draft_id}.json"
-            )
-            draft_record = draft.record()
-            source_event_path = (
-                Path("quarantine")
-                / room
-                / "events"
-                / f"g{fetched_response.generation}-{event['seq']}.json"
-            )
-            source_event_hash = event_digest(event)
-            draft_record.update(
-                {
-                    "room": room,
-                    "event_seq": event["seq"],
-                    "source_event_path": source_event_path.as_posix(),
-                    "source_event_sha256": source_event_hash,
-                }
-            )
-            atomic_json(root, draft_relative, draft_record)
-            draft_evidence = draft.evidence(draft_relative.as_posix())
-            draft_evidence.update(
-                {
-                    "source_event_path": source_event_path.as_posix(),
-                    "source_event_sha256": source_event_hash,
-                }
-            )
-            evidence["draft"] = draft_evidence
         event_results.append(evidence)
 
     def write_evidence(result: IngestionResult) -> None:

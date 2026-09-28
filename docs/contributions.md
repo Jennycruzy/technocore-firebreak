@@ -14,10 +14,9 @@ upstream issues or pull requests.
 - Reproducible suite: 78 tests, pinned hostile corpus verification, adapter certification, and
   Linux/Windows/wheel/container checks.
 
-The v0.4.0 workflow demonstrates bounded fetch, quarantine, classification, review-only drafting,
-source-event binding, explicit human confirmation, signed publication, bounded read-back
-verification, and a local approval receipt. Tests use loopback fake servers; no hostile live-room
-content is required.
+The v0.4.0 workflow demonstrates bounded fetch, quarantine, classification, capability
+containment, DID attribution, and explicit operator-approved signed publication. Tests use
+loopback fake servers; no hostile live-room content is required.
 
 ## Upstream protocol contribution
 

@@ -22,7 +22,6 @@ from .isolation import docker_adapter_command
 from .pipeline import process_room
 from .publish import publish_signed_message
 from .render import terminal_safe_json
-from .review import approve_review, preview_review
 
 
 def parser() -> argparse.ArgumentParser:
@@ -68,9 +67,7 @@ def parser() -> argparse.ArgumentParser:
     agent.add_argument("--interval", type=float, default=1.0)
     agent.add_argument("--identity-key", type=Path)
     agent.add_argument("room")
-    agent_modes = agent.add_mutually_exclusive_group()
-    agent_modes.add_argument("--adapter", nargs=argparse.REMAINDER, default=[])
-    agent_modes.add_argument("--drafter", nargs=argparse.REMAINDER, default=[])
+    agent.add_argument("--adapter", nargs=argparse.REMAINDER, default=[])
     publish = subcommands.add_parser(
         "publish", help="preview and explicitly approve one signed room message"
     )
@@ -83,21 +80,6 @@ def parser() -> argparse.ArgumentParser:
         "--confirm", action="store_true", help="authorize the network write"
     )
     publish.add_argument("--timeout", type=float, default=10.0)
-    review = subcommands.add_parser(
-        "review", help="preview or publish one quarantined response draft"
-    )
-    review.add_argument("--draft", type=Path, required=True)
-    review.add_argument("--base-url", required=True)
-    review.add_argument("--key-file", type=Path, required=True)
-    review.add_argument("--room", required=True)
-    review.add_argument("--nonce", required=True)
-    review.add_argument("--root", type=Path, default=Path(".firebreak"))
-    review.add_argument(
-        "--confirm",
-        action="store_true",
-        help="authorize publication of the reviewed draft",
-    )
-    review.add_argument("--timeout", type=float, default=10.0)
     identity = subcommands.add_parser(
         "identity", help="create and use a local Ed25519 did:key identity"
     )
@@ -155,7 +137,6 @@ def main(argv: list[str] | None = None) -> int:
                 rounds=args.rounds,
                 interval=args.interval,
                 adapter=args.adapter,
-                drafter=args.drafter,
                 identity_key=args.identity_key,
             )
             for report in reports:
@@ -182,29 +163,6 @@ def main(argv: list[str] | None = None) -> int:
             )
             print(terminal_safe_json({**result, "published": True}))
             return 0
-        if args.command == "review":
-            key = load_private_key(args.key_file)
-            if not args.confirm:
-                preview = preview_review(
-                    args.draft, key, args.room, args.nonce, args.root
-                )
-                print(terminal_safe_json(preview))
-                print(
-                    "publication not sent; rerun with --confirm after reviewing the draft",
-                    file=sys.stderr,
-                )
-                return 2
-            result = approve_review(
-                args.draft,
-                key,
-                args.room,
-                args.nonce,
-                args.base_url,
-                args.root,
-                timeout=args.timeout,
-            )
-            print(terminal_safe_json(result))
-            return 0 if result["verification"]["verified"] else 1
         if args.command == "identity":
             if args.identity_command == "generate":
                 print(generate_identity(args.key_file))

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Remove optional model/drafter/review integration and promotional launch-copy material from the
+  main branch. The v0.4.0 release remains an immutable historical snapshot.
+
 ## 0.4.0 — 2026-09-28
 
 - Add preview-first, explicitly approved signed publication for operator-authored messages.
@@ -32,8 +37,6 @@
   commit rules; it has no automatic reply or publication approval path.
 - Add owner-only Ed25519 `did:key` generation, loading, identity-note paths, and offline message
   signing for attributable future writes.
-
-## Unreleased
 
 ## 0.1.0 — 2026-09-26
 

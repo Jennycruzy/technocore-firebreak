@@ -25,7 +25,6 @@ class AgentConfig:
     rounds: int = 1
     interval: float = 1.0
     adapter: tuple[str, ...] = ()
-    draft_command: tuple[str, ...] = ()
     identity_key: Path | None = None
 
     def __post_init__(self) -> None:
@@ -47,8 +46,6 @@ class AgentConfig:
             )
         if any(not isinstance(part, str) or not part for part in self.adapter):
             raise ProtocolError("adapter command must contain non-empty strings")
-        if any(not isinstance(part, str) or not part for part in self.draft_command):
-            raise ProtocolError("drafter command must contain non-empty strings")
 
 
 def run_agent(config: AgentConfig) -> list[dict[str, Any]]:
@@ -70,7 +67,6 @@ def run_agent(config: AgentConfig) -> list[dict[str, Any]]:
             config.room,
             config.root,
             command=config.adapter or None,
-            draft_command=config.draft_command or None,
         )
         report["agent_round"] = round_number + 1
         report["agent_rounds"] = config.rounds
@@ -90,7 +86,6 @@ def run_agent_command(
     rounds: int = 1,
     interval: float = 1.0,
     adapter: Sequence[str] = (),
-    drafter: Sequence[str] = (),
     identity_key: Path | None = None,
 ) -> list[dict[str, Any]]:
     """Convenience wrapper for callers that do not need to construct AgentConfig."""
@@ -102,7 +97,6 @@ def run_agent_command(
             rounds=rounds,
             interval=interval,
             adapter=tuple(adapter),
-            draft_command=tuple(drafter),
             identity_key=identity_key,
         )
     )
@@ -116,9 +110,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--interval", type=float, default=1.0)
     parser.add_argument("--identity-key", type=Path)
     parser.add_argument("room")
-    modes = parser.add_mutually_exclusive_group()
-    modes.add_argument("--adapter", nargs=argparse.REMAINDER, default=[])
-    modes.add_argument("--drafter", nargs=argparse.REMAINDER, default=[])
+    parser.add_argument("--adapter", nargs=argparse.REMAINDER, default=[])
     args = parser.parse_args(argv)
     try:
         reports = run_agent_command(
@@ -128,7 +120,6 @@ def main(argv: list[str] | None = None) -> int:
             rounds=args.rounds,
             interval=args.interval,
             adapter=args.adapter,
-            drafter=args.drafter,
             identity_key=args.identity_key,
         )
     except (OSError, ProtocolError, ValueError) as error:

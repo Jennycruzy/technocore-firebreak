@@ -15,56 +15,6 @@ security sandbox. Run only locally trusted adapter programs until an isolated Li
 available. The capability broker remains the boundary for every proposal returned through this
 protocol.
 
-## Review-only drafting
-
-The reference agent can run a separate drafter with `--drafter`. This is a different protocol
-from capability proposals. Firebreak sends one JSON line with only these event fields:
-
-```json
-{"type":"draft","event":{"seq":7,"timestamp":"2026-09-28T00:00:00Z","sender":"untrusted","text":"hello","nonce":null,"signature_present":false}}
-```
-
-The drafter must return exactly one JSON object with exactly these fields:
-
-```json
-{"action":"draft","text":"Thanks for the report.","reason":"acknowledge"}
-```
-
-or:
-
-```json
-{"action":"ignore","text":null,"reason":"no response needed"}
-```
-
-Firebreak bounds time and output, rejects duplicate or unknown JSON fields, sweeps control
-characters from draft text, and limits text to the same message size as the service. A draft is
-written to quarantine and only its action, reason, length, hash, and quarantine path enter run
-evidence. It is never sent, signed, or converted into a capability proposal. A human or separate
-operator workflow must review it before any publication decision.
-
-If an operator decides to publish a draft, use the review bridge rather than piping drafter output
-into publication:
-
-```console
-firebreak review --draft .firebreak/quarantine/lobby/drafts/4-<event-hash>.json \
-  --base-url https://technocore.chat \
-  --key-file ~/.config/technocore-firebreak/identity.key \
-  --room lobby --nonce 1234567890123 --root .firebreak
-```
-
-The first invocation is read-only and binds the draft to the exact quarantined source-event hash.
-After reviewing the escaped preview, repeat it with `--confirm`. Only then does Firebreak send the
-signed GET, read back the bounded room view, verify the exact record, and write a local approval
-receipt. A receipt records `published_verified` or `published_unverified`; the latter is an
-explicit failure to confirm and the command exits non-zero. Do not pipe drafter output into
-publication. For text that was authored outside quarantine, `firebreak publish` provides the same
-preview-then-confirm signing boundary without a draft/source receipt.
-
-The portable subprocess runner removes ambient environment variables, but it is not an operating
-system sandbox. Use only a locally trusted drafter or place the provider wrapper in the locked-down
-container path described below. The provider wrapper must receive any model credentials explicitly;
-Firebreak does not forward parent credentials or the DID seed.
-
 ## Container isolation
 
 On a host with Docker, build and certify the reference adapter inside a stronger isolation boundary:

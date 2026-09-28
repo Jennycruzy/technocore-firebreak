@@ -29,11 +29,9 @@ docker build -f docker/adapter.Dockerfile -t technocore-firebreak-adapter:0.4.0 
 firebreak certify --docker-image technocore-firebreak-adapter:0.4.0 --output evidence
 ```
 
-The complete operator workflow is exercised without the live service by the review integration
-tests: a loopback room response is quarantined, a bounded drafter creates a source-bound draft,
-the first review invocation previews without writing, the confirmed invocation signs and sends,
-the room is read back and verified, and an approval receipt is written below the test root.
-Publication tests also prove that an unapproved call fails before any network connection.
+Publication tests use a loopback server and prove that the canonical signed path is constructed
+correctly while an unapproved call fails before any network connection. No external response
+generator or live-room write is part of the reproducibility path.
 
 The default CircleCI workflow is the required verification path: it repeats the portable checks on
 Linux and Windows, tests the built wheel from outside the source tree, and runs container certification

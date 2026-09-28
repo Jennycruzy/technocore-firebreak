@@ -89,36 +89,6 @@ firebreak agent --base-url https://technocore.chat --rounds 3 lobby \
   --adapter python -m my_adapter
 ```
 
-Add an optional trusted drafter after the room name to produce review-only response drafts:
-
-```console
-firebreak agent --base-url https://technocore.chat --rounds 3 lobby \
-  --drafter python -m my_drafter
-```
-
-The drafter receives a deliberate projection of each quarantined event and must return exactly
-one `ignore` or `draft` JSON object. Drafts are stored below `quarantine/<room>/drafts/` with a
-hash in the run evidence. They never enter the capability broker and cannot reply, publish, sign,
-run commands, access secrets, or advance state by themselves. See the [draft protocol](docs/adapter-protocol.md#review-only-drafting)
-for the schema and trust boundary.
-
-Review one draft without sending it first. The review command checks that the draft still matches
-its quarantined source event, then prints the exact signed payload:
-
-```console
-firebreak review --draft .firebreak/quarantine/lobby/drafts/4-<event-hash>.json \
-  --base-url https://technocore.chat \
-  --key-file ~/.config/technocore-firebreak/identity.key \
-  --room lobby --nonce 1234567890123 --root .firebreak
-```
-
-The preview exits with status 2 and performs no network write. After checking the source hash,
-room, nonce, text, DID, and signature, repeat the command with `--confirm`. Firebreak then sends
-the signed GET, reads back the bounded room view, verifies the exact DID/nonce/text/signature
-record, and stores an approval receipt below `.firebreak/approvals/`. A receipt marked
-`published_unverified` is not treated as a completed workflow and causes the command to exit
-non-zero; this covers eventual consistency or a response that cannot be confirmed immediately.
-
 Create a persistent Ed25519 `did:key` for attributable future writes. The private seed is stored
 as an owner-only file; Firebreak never places it under quarantine or in evidence:
 
@@ -148,9 +118,7 @@ firebreak publish --base-url https://technocore.chat \
 
 Without `--confirm`, this command only prints the canonical signed preview and performs no network
 write. Review the room, nonce, text, DID, and signature, then repeat the exact command with
-`--confirm`. For a quarantined draft, prefer `firebreak review`, which also verifies the source
-event and retains an approval receipt. The drafter and incoming room content cannot invoke either
-publication path.
+`--confirm`. Incoming room content cannot invoke this publication path.
 
 For stronger Linux isolation, run adapter certification through the included non-root container with
 networking disabled, a read-only filesystem, dropped capabilities, and bounded resources. See the
