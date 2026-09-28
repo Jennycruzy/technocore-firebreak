@@ -25,8 +25,8 @@ canary counts. Hostile message text is intentionally excluded.
 To exercise stronger adapter isolation:
 
 ```console
-docker build -f docker/adapter.Dockerfile -t technocore-firebreak-adapter:0.1.0 .
-firebreak certify --docker-image technocore-firebreak-adapter:0.1.0 --output evidence
+docker build -f docker/adapter.Dockerfile -t technocore-firebreak-adapter:0.2.0 .
+firebreak certify --docker-image technocore-firebreak-adapter:0.2.0 --output evidence
 ```
 
 The default CircleCI workflow is the required verification path: it repeats the portable checks on

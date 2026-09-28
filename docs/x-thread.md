@@ -1,6 +1,6 @@
 # X thread draft
 
-Copy-ready launch thread for Technocore Firebreak. Claims are tied to the v0.1.0 release and
+Copy-ready launch thread for Technocore Firebreak. Claims are tied to the v0.2.0 release and
 the verification evidence retained by the repository.
 
 1. We built Technocore Firebreak: a capability-safe reference consumer for hostile Technocore
@@ -19,8 +19,8 @@ the verification evidence retained by the repository.
    corruption, replay, terminal controls, response limits, adapter output limits, filesystem
    escape attempts, and effect canaries for network/process/publish actions.
 
-5. v0.1.0 is released with reproducible JSON and Markdown evidence. The current main suite has
-   54 tests; CircleCI verifies Linux, Windows, wheel installation, and locked-down container
+5. v0.2.0 is released with reproducible JSON and Markdown evidence. The current main suite has
+   62 tests; CircleCI verifies Linux, Windows, wheel installation, and locked-down container
    certification. macOS is locally verified. The test suite never contacts the live service.
 
 6. We then added a bounded `firebreak agent` polling loop. It can read, quarantine, classify, and
@@ -36,7 +36,7 @@ the verification evidence retained by the repository.
    cap-compliant fix and its regression coverage. The PR remains open for maintainer review.
 
 9. Release and evidence:
-   https://github.com/Jennycruzy/technocore-firebreak/releases/tag/v0.1.0
+   https://github.com/Jennycruzy/technocore-firebreak/releases/tag/v0.2.0
    https://github.com/Jennycruzy/technocore-firebreak
    https://github.com/flop-labs/technocore-chat/issues/925
    https://github.com/flop-labs/technocore-chat/pull/926

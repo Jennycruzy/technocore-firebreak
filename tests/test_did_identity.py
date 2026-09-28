@@ -22,7 +22,7 @@ from firebreak.did import (
     verify_record,
 )
 from firebreak.errors import ProtocolError
-from firebreak.identity_note import refresh_identity_note
+from firebreak.identity_note import identity_note_status, refresh_identity_note
 
 
 class DidIdentityTests(unittest.TestCase):
@@ -105,6 +105,25 @@ class DidIdentityTests(unittest.TestCase):
                 self.assertRaisesRegex(ProtocolError, "different value"),
             ):
                 refresh_identity_note(base_url, key)
+        self.assertEqual(state["conditions"], [])
+
+    def test_identity_note_status_is_read_only_and_classifies_states(self):
+        with tempfile.TemporaryDirectory() as directory:
+            key = load_private_key(self._seed_file(Path(directory) / "identity.key"))
+            with self._note_server() as (base_url, state):
+                missing = identity_note_status(base_url, key)
+                refresh_identity_note(base_url, key)
+                present = identity_note_status(base_url, key)
+        self.assertEqual(missing["state"], "missing")
+        self.assertEqual(present["state"], "present")
+        self.assertEqual(state["conditions"], ["if_absent=1"])
+
+    def test_identity_note_status_detects_mismatch_without_writing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            key = load_private_key(self._seed_file(Path(directory) / "identity.key"))
+            with self._note_server("another-public-value") as (base_url, state):
+                report = identity_note_status(base_url, key)
+        self.assertEqual(report["state"], "mismatch")
         self.assertEqual(state["conditions"], [])
 
     @staticmethod

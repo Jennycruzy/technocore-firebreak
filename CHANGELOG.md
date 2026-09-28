@@ -1,14 +1,19 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-09-28
 
+- Add a read-only identity-note status check with mismatch and malformed-content classification.
+- Add collision-safe identity-note creation and refresh with strict read verification and atomic
+  write conditions.
+- Use the `certifi` CA bundle for portable HTTPS verification on identity-note operations.
+- Publish the bounded agent and DID tooling as a versioned release with 62 regression tests.
 - Add a bounded `firebreak agent` polling loop and `firebreak-agent` entry point.
 - Keep the reference agent behind the same quarantine, capability broker, evidence, and cursor
   commit rules; it has no automatic reply or publication approval path.
 - Add owner-only Ed25519 `did:key` generation, loading, identity-note paths, and offline message
   signing for attributable future writes.
-- Add collision-safe identity-note creation and refresh with strict read verification and atomic
-  write conditions.
+
+## Unreleased
 
 ## 0.1.0 — 2026-09-26
 

@@ -125,3 +125,24 @@ def refresh_identity_note(
     if write_status != 200:
         raise ProtocolError(f"identity-note write received HTTP {write_status}")
     return {"action": action, "did": did, "note_path": note_path}
+
+
+def identity_note_status(
+    base_url: str, key: Ed25519PrivateKey, *, timeout: float = 10.0
+) -> dict[str, str]:
+    """Read the public note and classify it without performing a write."""
+    did = did_of(key)
+    note_path = identity_note_path(did)
+    status, body = _request(base_url, note_path, timeout)
+    if status == 404:
+        state = "missing"
+    elif status == 200:
+        try:
+            current = _note_value(body)
+        except ProtocolError:
+            state = "invalid"
+        else:
+            state = "present" if current == did else "mismatch"
+    else:
+        raise ProtocolError(f"identity-note read received HTTP {status}")
+    return {"did": did, "note_path": note_path, "state": state}

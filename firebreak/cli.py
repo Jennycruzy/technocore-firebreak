@@ -17,7 +17,7 @@ from .did import (
     sign_message,
 )
 from .errors import FirebreakError
-from .identity_note import refresh_identity_note
+from .identity_note import identity_note_status, refresh_identity_note
 from .isolation import docker_adapter_command
 from .pipeline import process_room
 from .render import terminal_safe_json
@@ -87,6 +87,12 @@ def parser() -> argparse.ArgumentParser:
     refresh.add_argument("--base-url", required=True)
     refresh.add_argument("--key-file", type=Path, required=True)
     refresh.add_argument("--timeout", type=float, default=10.0)
+    status = identity_commands.add_parser(
+        "status", help="read and classify the public identity note"
+    )
+    status.add_argument("--base-url", required=True)
+    status.add_argument("--key-file", type=Path, required=True)
+    status.add_argument("--timeout", type=float, default=10.0)
     sign = identity_commands.add_parser(
         "sign", help="sign a room message without sending it"
     )
@@ -140,6 +146,14 @@ def main(argv: list[str] | None = None) -> int:
                         )
                     )
                 )
+            elif args.identity_command == "status":
+                report = identity_note_status(
+                    args.base_url,
+                    load_private_key(args.key_file),
+                    timeout=args.timeout,
+                )
+                print(terminal_safe_json(report))
+                return 0 if report["state"] == "present" else 1
             else:
                 print(
                     terminal_safe_json(
